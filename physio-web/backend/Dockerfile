@@ -1,7 +1,7 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Builder - Install dependencies
-FROM python:3.10-slim as builder
+FROM python:3.11-slim as builder
 
 WORKDIR /build
 
@@ -23,7 +23,7 @@ COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime - Create lean production image
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
