@@ -8,12 +8,8 @@ WORKDIR /build
 # Install system dependencies for ML libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libatlas-base-dev \
-    gfortran \
-    pkg-config \
     libopenblas-dev \
-    liblapack-dev \
-    imagemagick \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -30,8 +26,6 @@ WORKDIR /app
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas0 \
-    liblapack3 \
-    gfortran-runtime \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
