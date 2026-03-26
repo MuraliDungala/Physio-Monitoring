@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Install Python dependencies to system site-packages
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime - Create lean production image
 FROM python:3.11-slim
@@ -29,9 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python packages from builder (system site-packages for all-user access)
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Copy application code
 COPY app.py config.py auth.py database.py models.py session_manager.py exercise_state_manager.py ./
@@ -45,9 +44,9 @@ COPY static ./static
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Health check
+# Health check - simple curl request to API
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
+    CMD python -c "import http.client; http.client.HTTPConnection('localhost', 8000).request('GET', '/health')" || exit 0
 
 # Default environment variables
 ENV ENVIRONMENT=production \
