@@ -1,0 +1,25 @@
+{
+  "buildCommand": "echo 'Frontend is static files'",
+  "outputDirectory": "frontend",
+  "framework": "static",
+  "installCommand": "echo 'No build needed for static files'",
+  "devCommand": "python -m http.server 3000 --directory frontend",
+  "functions": {
+    "api": "backend"
+  },
+  "env": {
+    "REACT_APP_API_URL": "@rocket-api-url"
+  },
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "@rocket-api-url/:match*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

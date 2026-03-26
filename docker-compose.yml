@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: physio_postgres
+    environment:
+      POSTGRES_USER: physio_user
+      POSTGRES_PASSWORD: physio_password_dev
+      POSTGRES_DB: physio_monitoring
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - physio-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U physio_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./physio-web/backend
+      dockerfile: Dockerfile
+    container_name: physio_backend
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql://physio_user:physio_password_dev@postgres:5432/physio_monitoring
+      SECRET_KEY: dev-secret-key-change-in-production
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8000,http://frontend:3000
+      PORT: 8000
+      HOST: 0.0.0.0
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./physio-web/backend:/app
+      - ./physio-web/backend/ml_models:/app/ml_models:ro
+    networks:
+      - physio-network
+    command: python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (static server)
+  frontend:
+    image: python:3.10-slim
+    container_name: physio_frontend
+    working_dir: /app
+    command: python -m http.server 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./physio-web/frontend:/app
+    networks:
+      - physio-network
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_ENVIRONMENT: development
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: physio_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@physio.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - physio-network
+
+volumes:
+  postgres_data:
+
+networks:
+  physio-network:
+    driver: bridge

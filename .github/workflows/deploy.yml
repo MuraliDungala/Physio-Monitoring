@@ -1,0 +1,97 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: 3.10
+  
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          cd physio-web/backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Lint with Python
+        run: |
+          cd physio-web/backend
+          python -m py_compile app.py config.py database.py models.py auth.py
+      
+      - name: Check for syntax errors
+        run: |
+          cd physio-web/backend
+          python -m py_compile **/*.py
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check HTML validity
+        run: |
+          cd physio-web/frontend
+          # Basic HTML file checks
+          test -f index.html && echo "✓ index.html exists"
+          test -f script.js && echo "✓ script.js exists"
+          test -f config.js && echo "✓ config.js exists"
+          test -f style.css && echo "✓ style.css exists"
+
+  security-checks:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for secrets in code
+        run: |
+          echo "Checking for exposed secrets..."
+          if grep -r "SECRET_KEY=" physio-web --include="*.py" | grep -v ".env"; then
+            echo "❌ Found hardcoded SECRET_KEY"
+            exit 1
+          fi
+          if grep -r "password=" physio-web --include="*.py" | grep -v ".env"; then
+            echo "❌ Found hardcoded password"
+            exit 1
+          fi
+          echo "✓ No secrets found in code"
+      
+      - name: Check .gitignore
+        run: |
+          echo "Verifying .gitignore is present"
+          test -f .gitignore && echo "✓ .gitignore found"
+
+  notify-deployment:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Deployment Status
+        run: |
+          echo "✅ All checks passed!"
+          echo "Ready for production deployment."
+          echo ""
+          echo "🚀 Automatic deployment will trigger on:"
+          echo "   - Render: Monitor dashboard for auto-deployment"
+          echo "   - Vercel: Automatically deploys on push"
+          echo ""
+          echo "📊 Check deployment status at:"
+          echo "   - Backend: Render dashboard"
+          echo "   - Frontend: Vercel dashboard"

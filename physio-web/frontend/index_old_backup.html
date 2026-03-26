@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Physiotherapy Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- MediaPipe Pose Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>PhysioMonitor</span>
+                </div>
+                <div class="nav-menu">
+                    <a href="#" class="nav-link active" data-page="home">Home</a>
+                    <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
+                    <a href="#" class="nav-link" data-page="exercises">Exercises</a>
+                    <a href="#" class="nav-link" data-page="chatbot">Chatbot</a>
+                </div>
+                <div class="nav-auth">
+                    <button id="loginBtn" class="btn btn-outline">Login</button>
+                    <button id="logoutBtn" class="btn btn-outline" style="display: none;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Page -->
+            <div id="homePage" class="page active">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1>Intelligent Physiotherapy Monitoring</h1>
+                        <p>AI-powered exercise tracking with real-time feedback and personalized guidance</p>
+                        <div class="hero-buttons">
+                            <button class="btn btn-primary btn-large" id="testBtn" onclick="showPage('exercises')">
+                                <i class="fas fa-play"></i> Start Exercises
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="features">
+                    <div class="container">
+                        <h2>Features</h2>
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <i class="fas fa-video"></i>
+                                <h3>Real-time Camera Tracking</h3>
+                                <p>Advanced computer vision tracks your movements with precision</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-robot"></i>
+                                <h3>AI Exercise Recognition</h3>
+                                <p>Machine learning identifies exercises and provides instant feedback</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-microphone"></i>
+                                <h3>Voice Guidance</h3>
+                                <p>Audio feedback helps maintain proper form and motivation</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-comments"></i>
+                                <h3>AI Chatbot Assistant</h3>
+                                <p>Get answers to your physiotherapy questions instantly</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-chart-bar"></i>
+                                <h3>Progress Tracking</h3>
+                                <p>Monitor your improvement with detailed analytics</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-user-shield"></i>
+                                <h3>Personalized Experience</h3>
+                                <p>Tailored exercises and feedback based on your progress</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise Categories Page -->
+            <div id="exercisesPage" class="page">
+                <div class="container">
+                    <h1>Exercise Categories</h1>
+                    <div class="category-header">
+                        <button class="btn btn-primary" onclick="loadAllExercises()">
+                            <i class="fas fa-list"></i> View All Exercises
+                        </button>
+                    </div>
+                    <div class="exercise-categories">
+                        <div class="category-card" data-category="Neck">
+                            <i class="fas fa-stretching"></i>
+                            <h3>Neck</h3>
+                            <p>Neck stretches and mobility exercises</p>
+                        </div>
+                        <div class="category-card" data-category="Shoulder">
+                            <i class="fas fa-dumbbell"></i>
+                            <h3>Shoulder</h3>
+                            <p>Shoulder strengthening and flexibility</p>
+                        </div>
+                        <div class="category-card" data-category="Elbow">
+                            <i class="fas fa-arm"></i>
+                            <h3>Elbow</h3>
+                            <p>Elbow joint exercises and rehabilitation</p>
+                        </div>
+                        <div class="category-card" data-category="Wrist">
+                            <i class="fas fa-hand"></i>
+                            <h3>Wrist</h3>
+                            <p>Wrist mobility and strengthening</p>
+                        </div>
+                        <div class="category-card" data-category="Hip">
+                            <i class="fas fa-walking"></i>
+                            <h3>Hip</h3>
+                            <p>Hip joint exercises and mobility</p>
+                        </div>
+                        <div class="category-card" data-category="Knee">
+                            <i class="fas fa-knee"></i>
+                            <h3>Knee</h3>
+                            <p>Knee strengthening and rehabilitation</p>
+                        </div>
+                        <div class="category-card" data-category="Ankle">
+                            <i class="fas fa-shoe-prints"></i>
+                            <h3>Ankle</h3>
+                            <p>Ankle mobility and stability exercises</p>
+                        </div>
+                        <div class="category-card" data-category="Squat">
+                            <i class="fas fa-chair"></i>
+                            <h3>Squat</h3>
+                            <p>Squat variations for lower body strength</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Exercises Page -->
+            <div id="exerciseListPage" class="page">
+                <div class="container">
+                    <button class="btn btn-back" onclick="showPage('exercises')">
+                        <i class="fas fa-arrow-left"></i> Back to Categories
+                    </button>
+                    <h1 id="categoryTitle">Category Exercises</h1>
+                    <div id="exerciseList" class="exercise-list">
+                        <!-- Exercises will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Exercises Page -->
+            <div id="allExercisesPage" class="page">
+                <div class="container">
+                    <button class="btn btn-back" onclick="showPage('exercises')">
+                        <i class="fas fa-arrow-left"></i> Back to Categories
+                    </button>
+                    <div class="all-exercises-header">
+                        <h1>All Exercises</h1>
+                        <div class="exercise-filters">
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'all')">All</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Neck')">Neck</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Shoulder')">Shoulder</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Elbow')">Elbow</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Knee')">Knee</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Hip')">Hip</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Wrist')">Wrist</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Back')">Back</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Ankle')">Ankle</button>
+                            <button class="btn btn-outline" onclick="filterExercises(this, 'Squat')">Squat</button>
+                        </div>
+                    </div>
+                    <div id="allExercisesList" class="exercise-list">
+                        <!-- All exercises will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise Session Page -->
+            <div id="exercisePage" class="page">
+                <div class="container">
+                    <button class="btn btn-back" onclick="exitExercise()">
+                        <i class="fas fa-arrow-left"></i> Exit Exercise
+                    </button>
+                    
+                    <div class="exercise-session">
+                        <div class="exercise-header">
+                            <h1 id="exerciseTitle">Exercise Session</h1>
+                            <div class="exercise-controls">
+                                <button id="startBtn" class="btn btn-primary">Start Camera</button>
+                                <button id="pauseBtn" class="btn btn-secondary" style="display: none;">Pause</button>
+                                <button id="resetBtn" class="btn btn-outline">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="exercise-content">
+                            <div class="video-container">
+                                <video id="videoElement" autoplay playsinline></video>
+                                <canvas id="overlayCanvas"></canvas>
+                                <img id="skeletonDisplay" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                                <div id="cameraPlaceholder" class="camera-placeholder">
+                                    <i class="fas fa-video"></i>
+                                    <p>Click "Start Camera" to begin</p>
+                                </div>
+                            </div>
+
+                            <div class="exercise-feedback">
+                                <div class="feedback-card">
+                                    <h3>Current Exercise</h3>
+                                    <div id="currentExercise" class="exercise-value">-</div>
+                                </div>
+
+                                <div class="feedback-card">
+                                    <h3>Repetitions</h3>
+                                    <div id="repCount" class="rep-value">0</div>
+                                </div>
+
+                                <div class="feedback-card">
+                                    <h3>Joint Angle</h3>
+                                    <div id="jointAngle" class="angle-value">0°</div>
+                                </div>
+
+                                <div class="feedback-card">
+                                    <h3>Quality Score</h3>
+                                    <div id="qualityScore" class="quality-value">0%</div>
+                                </div>
+
+                                <div class="feedback-card">
+                                    <h3>Pose Detection</h3>
+                                    <div id="landmarksStatus" class="landmarks-value">❌ Not Detected</div>
+                                </div>
+
+                                <div class="feedback-card full-width">
+                                    <h3>Posture Feedback</h3>
+                                    <div id="postureFeedback" class="posture-value">Correct</div>
+                                </div>
+
+                                <div class="feedback-card full-width">
+                                    <h3>Voice Feedback</h3>
+                                    <div id="voiceFeedback" class="voice-value">
+                                        <i class="fas fa-volume-up"></i>
+                                        <span id="voiceMessage">Voice guidance will appear here</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="page">
+                <div class="container">
+                    <div class="dashboard-header">
+                        <h1>Progress Dashboard</h1>
+                        <div class="dashboard-controls">
+                            <button class="btn btn-outline btn-small" onclick="refreshDashboardData()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                            <select id="dashboardTimeFilter" class="filter-select" onchange="updateDashboardTimeFilter()">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Statistics -->
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-fire"></i>
+                            <div class="stat-content">
+                                <h3>Total Sessions</h3>
+                                <div id="totalSessions" class="stat-value">0</div>
+                                <p class="stat-label">workouts completed</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-dumbbell"></i>
+                            <div class="stat-content">
+                                <h3>Total Reps</h3>
+                                <div id="totalReps" class="stat-value">0</div>
+                                <p class="stat-label">repetitions performed</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-star"></i>
+                            <div class="stat-content">
+                                <h3>Avg Quality</h3>
+                                <div id="avgQuality" class="stat-value">0%</div>
+                                <p class="stat-label">form accuracy</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-calendar"></i>
+                            <div class="stat-content">
+                                <h3>Days Active</h3>
+                                <div id="daysActive" class="stat-value">0</div>
+                                <p class="stat-label">exercise days</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-flame"></i>
+                            <div class="stat-content">
+                                <h3>Current Streak</h3>
+                                <div id="currentStreak" class="stat-value">0</div>
+                                <p class="stat-label">consecutive days</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-chart-line"></i>
+                            <div class="stat-content">
+                                <h3>Total Duration</h3>
+                                <div id="totalDuration" class="stat-value">0h</div>
+                                <p class="stat-label">hours exercising</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="dashboard-charts">
+                        <div class="chart-container">
+                            <h2>Weekly Activity</h2>
+                            <div id="weeklyChart" class="chart"></div>
+                        </div>
+                        <div class="chart-container">
+                            <h2>Quality Trend</h2>
+                            <div id="qualityChart" class="chart"></div>
+                        </div>
+                    </div>
+
+                    <!-- Body Part Performance -->
+                    <div class="body-part-section">
+                        <h2>Body Part Performance</h2>
+                        <div id="bodyPartStats" class="body-part-grid">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Exercise Performance Table -->
+                    <div class="exercise-performance-section">
+                        <div class="section-header">
+                            <h2>Exercise Performance</h2>
+                            <div class="section-filters">
+                                <button class="filter-btn active" onclick="filterExerciseTable(this, 'all')">All</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Shoulder')">Shoulder</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Elbow')">Elbow</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Knee')">Knee</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Hip')">Hip</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Neck')">Neck</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Wrist')">Wrist</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Ankle')">Ankle</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Squat')">Squat</button>
+                                <button class="filter-btn" onclick="filterExerciseTable(this, 'Back')">Back</button>
+                            </div>
+                        </div>
+                        <div class="exercise-table-wrapper">
+                            <table id="exerciseTable" class="exercise-table">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortExerciseTable(0)">Exercise <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortExerciseTable(1)">Total Reps <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortExerciseTable(2)">Best Reps <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortExerciseTable(3)">Sessions <i class="fas fa-sort"></i></th>
+                                        <th onclick="sortExerciseTable(4)">Avg Quality <i class="fas fa-sort"></i></th>
+                                        <th>Last Session</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="exerciseTableBody">
+                                    <!-- Will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recent Sessions -->
+                    <div class="recent-sessions">
+                        <div class="sessions-header">
+                            <h2>Recent Sessions</h2>
+                            <div class="session-controls">
+                                <input type="text" id="sessionSearch" placeholder="Search exercises..." class="search-input">
+                                <select id="sessionSort" class="filter-select" onchange="updateSessionSort()">
+                                    <option value="recent">Most Recent</option>
+                                    <option value="quality">Highest Quality</option>
+                                    <option value="reps">Most Reps</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="sessionsList" class="sessions-list">
+                            <!-- Sessions will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chatbot Page -->
+            <div id="chatbotPage" class="page">
+                <div class="container">
+                    <h1>Physiotherapy Assistant</h1>
+                    
+                    <div class="chatbot-container">
+                        <div class="chatbot-messages" id="chatMessages">
+                            <div class="message bot-message">
+                                <i class="fas fa-robot"></i>
+                                <div class="message-content">
+                                    <p>Hello! I'm your physiotherapy assistant. How can I help you today?</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chatbot-input">
+                            <div class="input-group">
+                                <input type="text" id="chatInput" placeholder="Ask me about exercises, safety tips, or guidance...">
+                                <button id="sendBtn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <div class="quick-actions">
+                                <button class="btn btn-outline btn-small" onclick="askExerciseList()">Exercise List</button>
+                                <button class="btn btn-outline btn-small" onclick="askSafetyTip()">Safety Tip</button>
+                                <button class="btn btn-outline btn-small" onclick="askPostureTips()">Posture Tips</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Login</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <p class="form-footer">
+                        Don't have an account? <a href="#" id="showRegister">Register</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Register Modal -->
+        <div id="registerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Register</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="regUsername">Username</label>
+                        <input type="text" id="regUsername" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regFullName">Full Name</label>
+                        <input type="text" id="regFullName" name="full_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password</label>
+                        <input type="password" id="regPassword" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <p class="form-footer">
+                        Already have an account? <a href="#" id="showLogin">Login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Panel -->
+    <div id="debugPanel" class="debug-panel" style="display: none;"></div>
+
+    <!-- Load main script FIRST to define global variables like voiceAssistant -->
+    <script src="script.js?v=2"></script>
+    <!-- Load voice assistant module SECOND to use voiceAssistant global -->
+    <script src="voice-assistant.js?v=3"></script>
+    <script src="test-validator.js"></script>
+</body>
+</html>

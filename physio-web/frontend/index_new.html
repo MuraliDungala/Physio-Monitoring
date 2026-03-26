@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysioMonitor - Intelligent Physiotherapy Monitoring</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style_professional.css">
+    <!-- MediaPipe and Chart Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>PhysioMonitor</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="nav-item" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="exercises">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>Exercises</span>
+                </a>
+                <a href="#" class="nav-item" data-page="rehab-plan">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Rehab Plan</span>
+                </a>
+                <a href="#" class="nav-item" data-page="reports">
+                    <i class="fas fa-file-chart-line"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="userMenuBtn" class="user-profile">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="Profile" class="user-avatar">
+                    <div class="user-info">
+                        <div class="user-name">John Doe</div>
+                        <div class="user-status">Active</div>
+                    </div>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Top Navigation Bar -->
+        <nav class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="breadcrumb" id="breadcrumb">
+                    <span>Home</span>
+                </div>
+            </div>
+
+            <div class="topbar-center">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search exercises...">
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="icon-btn" id="voiceToggle" title="Toggle Voice Guidance">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="icon-btn notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+                <button class="icon-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- HOME PAGE -->
+            <div id="homePage" class="page active">
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1>Welcome to PhysioMonitor</h1>
+                        <p>AI-Powered Physiotherapy Monitoring with Real-Time Feedback & Personalized Guidance</p>
+                        <div class="hero-buttons">
+                            <button class="btn btn-primary btn-lg" onclick="navigateToPage('exercises')">
+                                <i class="fas fa-play"></i> Start Exercise Session
+                            </button>
+                            <button class="btn btn-secondary btn-lg" onclick="navigateToPage('dashboard')">
+                                <i class="fas fa-chart-line"></i> View Dashboard
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="animation-box">
+                            <i class="fas fa-video"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <section class="features-section">
+                    <h2>Why Choose PhysioMonitor?</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <h3>Real-Time Camera Tracking</h3>
+                            <p>Advanced pose detection technology tracks your movements with millimeter precision</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h3>AI Exercise Recognition</h3>
+                            <p>Machine learning identifies exercises instantly and provides real-time feedback</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-microphone"></i>
+                            </div>
+                            <h3>Voice Guidance</h3>
+                            <p>Natural language guidance keeps you motivated and maintains proper form</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <h3>AI Chatbot Assistant</h3>
+                            <p>24/7 physiotherapy assistance answers your questions instantly</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h3>Progress Analytics</h3>
+                            <p>Detailed insights on your recovery journey with AI-generated reports</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <h3>Personalized Plans</h3>
+                            <p>Agentic AI creates custom rehab plans adapted to your progress</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How It Works -->
+                <section class="how-it-works">
+                    <h2>How It Works</h2>
+                    <div class="steps-container">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <h3>Select Exercise</h3>
+                            <p>Choose from 28+ exercises across all body parts</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <h3>Position Camera</h3>
+                            <p>Place camera for optimal angle tracking</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <h3>Real-Time Feedback</h3>
+                            <p>Get instant corrections and guidance</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <h3>Track Progress</h3>
+                            <p>Monitor improvements over time</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Statistics -->
+                <section class="stats-section">
+                    <div class="stat">
+                        <div class="stat-number">28+</div>
+                        <div class="stat-label">Exercises Supported</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">Accuracy Rate</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">10,000+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">AI Support</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- LOGIN PAGE -->
+            <div id="loginPage" class="page">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="auth-header">
+                            <h1>Welcome Back</h1>
+                            <p>Sign in to your account</p>
+                        </div>
+                        <form id="loginForm" class="auth-form">
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" placeholder="you@example.com" required>
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" placeholder="••••••••" required>
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="form-options">
+                                <label class="remember-me">
+                                    <input type="checkbox">
+                                    Remember me
+                                </label>
+                                <a href="#" class="forgot-password">Forgot password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                        </form>
+                        <div class="auth-divider">OR</div>
+                        <button class="btn btn-google btn-block">
+                            <i class="fab fa-google"></i> Sign in with Google
+                        </button>
+                        <p class="auth-footer">
+                            Don't have an account? <a href="#" onclick="navigateToPage('register')">Sign up here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REGISTER PAGE -->
+            <div id="registerPage" class="page">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="auth-header">
+                            <h1>Create Account</h1>
+                            <p>Start your recovery journey today</p>
+                        </div>
+                        <form id="registerForm" class="auth-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    <input type="text" placeholder="John" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    <input type="text" placeholder="Doe" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" placeholder="you@example.com" required>
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="form-group">
+                                <label>Injury Type</label>
+                                <select required>
+                                    <option>Select an injury type...</option>
+                                    <option>Shoulder Injury</option>
+                                    <option>Knee Injury</option>
+                                    <option>Hip Injury</option>
+                                    <option>Back Pain</option>
+                                    <option>Neck Pain</option>
+                                    <option>Wrist Injury</option>
+                                    <option>Ankle Injury</option>
+                                </select>
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="form-group">
+                                <label>Rehab Goal</label>
+                                <input type="text" placeholder="e.g., Full shoulder mobility recovery" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" placeholder="••••••••" required>
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Password</label>
+                                <input type="password" placeholder="••••••••" required>
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <label class="checkbox-label">
+                                <input type="checkbox" required>
+                                I agree to the Terms of Service and Privacy Policy
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                        </form>
+                        <p class="auth-footer">
+                            Already have an account? <a href="#" onclick="navigateToPage('login')">Sign in here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD PAGE -->
+            <div id="dashboardPage" class="page">
+                <div class="page-header">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p>Your recovery progress at a glance</p>
+                    </div>
+                    <div class="header-controls">
+                        <select id="timeFilter" class="select-filter">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Key Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-body">
+                            <h3>Total Sessions</h3>
+                            <div class="stat-value">24</div>
+                            <p class="stat-change">↑ 3 this week</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="stat-body">
+                            <h3>Total Reps</h3>
+                            <div class="stat-value">1,240</div>
+                            <p class="stat-change">↑ 120 this week</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-body">
+                            <h3>Avg Quality</h3>
+                            <div class="stat-value">92%</div>
+                            <p class="stat-change">↑ 5% improvement</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="stat-body">
+                            <h3>Current Streak</h3>
+                            <div class="stat-value">12 Days</div>
+                            <p class="stat-change">🔥 Keep it up!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Weekly Activity</h3>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Quality Trend</h3>
+                        <canvas id="qualityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Body Part Performance -->
+                <section class="body-parts-section">
+                    <h2>Body Part Performance</h2>
+                    <div class="body-parts-grid">
+                        <div class="body-part-card">
+                            <h4>Shoulder</h4>
+                            <div class="progress-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" class="progress-bg"></circle>
+                                    <circle cx="50" cy="50" r="45" class="progress-fill" style="--progress: 92"></circle>
+                                </svg>
+                                <div class="progress-text">92%</div>
+                            </div>
+                            <p>8 sessions · 240 reps</p>
+                        </div>
+                        <div class="body-part-card">
+                            <h4>Knee</h4>
+                            <div class="progress-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" class="progress-bg"></circle>
+                                    <circle cx="50" cy="50" r="45" class="progress-fill" style="--progress: 88"></circle>
+                                </svg>
+                                <div class="progress-text">88%</div>
+                            </div>
+                            <p>6 sessions · 180 reps</p>
+                        </div>
+                        <div class="body-part-card">
+                            <h4>Hip</h4>
+                            <div class="progress-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" class="progress-bg"></circle>
+                                    <circle cx="50" cy="50" r="45" class="progress-fill" style="--progress: 85"></circle>
+                                </svg>
+                                <div class="progress-text">85%</div>
+                            </div>
+                            <p>5 sessions · 150 reps</p>
+                        </div>
+                        <div class="body-part-card">
+                            <h4>Elbow</h4>
+                            <div class="progress-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" class="progress-bg"></circle>
+                                    <circle cx="50" cy="50" r="45" class="progress-fill" style="--progress: 90"></circle>
+                                </svg>
+                                <div class="progress-text">90%</div>
+                            </div>
+                            <p>5 sessions · 170 reps</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Sessions -->
+                <section class="recent-sessions">
+                    <h2>Recent Sessions</h2>
+                    <div class="sessions-list">
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="session-title">Shoulder Flexion</div>
+                                <div class="session-meta">Today at 2:30 PM · 8 reps</div>
+                            </div>
+                            <div class="session-quality">
+                                <span class="quality-badge quality-high">92% Quality</span>
+                            </div>
+                        </div>
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="session-title">Knee Extension</div>
+                                <div class="session-meta">Yesterday at 10:15 AM · 12 reps</div>
+                            </div>
+                            <div class="session-quality">
+                                <span class="quality-badge quality-high">88% Quality</span>
+                            </div>
+                        </div>
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="session-title">Hip Abduction</div>
+                                <div class="session-meta">2 days ago at 3:45 PM · 10 reps</div>
+                            </div>
+                            <div class="session-quality">
+                                <span class="quality-badge quality-medium">78% Quality</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- EXERCISE CATEGORIES PAGE -->
+            <div id="exercisesPage" class="page">
+                <div class="page-header">
+                    <div>
+                        <h1>Exercise Categories</h1>
+                        <p>Select a body part to begin</p>
+                    </div>
+                </div>
+
+                <div class="categories-grid">
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Neck')">
+                        <div class="category-icon">
+                            <i class="fas fa-head-side-virus"></i>
+                        </div>
+                        <h3>Neck</h3>
+                        <p>Mobility & Flexibility</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Shoulder')">
+                        <div class="category-icon">
+                            <i class="fas fa-shoulders"></i>
+                        </div>
+                        <h3>Shoulder</h3>
+                        <p>Strength & Recovery</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Elbow')">
+                        <div class="category-icon">
+                            <i class="fas fa-hand-fist"></i>
+                        </div>
+                        <h3>Elbow</h3>
+                        <p>Joint Rehabilitation</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Wrist')">
+                        <div class="category-icon">
+                            <i class="fas fa-hands"></i>
+                        </div>
+                        <h3>Wrist</h3>
+                        <p>Mobility Exercises</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Hip')">
+                        <div class="category-icon">
+                            <i class="fas fa-person-hiking"></i>
+                        </div>
+                        <h3>Hip</h3>
+                        <p>Range of Motion</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Knee')">
+                        <div class="category-icon">
+                            <i class="fas fa-person-walking"></i>
+                        </div>
+                        <h3>Knee</h3>
+                        <p>Strength Building</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Ankle')">
+                        <div class="category-icon">
+                            <i class="fas fa-shoe-prints"></i>
+                        </div>
+                        <h3>Ankle</h3>
+                        <p>Stability & Balance</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="category-card" onclick="navigateToExerciseSubtypes('Squat')">
+                        <div class="category-icon">
+                            <i class="fas fa-chair"></i>
+                        </div>
+                        <h3>Full Body</h3>
+                        <p>Compound Movements</p>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXERCISE SUBTYPES PAGE -->
+            <div id="exerciseSubtypesPage" class="page">
+                <div class="page-header">
+                    <button class="btn btn-back" onclick="navigateToPage('exercises')">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <div>
+                        <h1 id="subtypeTitle">Shoulder Exercises</h1>
+                        <p>Choose an exercise to begin your session</p>
+                    </div>
+                </div>
+
+                <div class="exercises-grid" id="subtypesGrid">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- LIVE EXERCISE SESSION PAGE -->
+            <div id="sessionPage" class="page">
+                <div class="session-container">
+                    <div class="session-layout">
+                        <!-- Video Feed -->
+                        <div class="video-section">
+                            <div class="video-wrapper">
+                                <video id="videoElement" autoplay playsinline style="display: none;"></video>
+                                <canvas id="overlayCanvas"></canvas>
+                                <div id="cameraPlaceholder" class="camera-placeholder">
+                                    <i class="fas fa-video"></i>
+                                    <p>Click Start to begin</p>
+                                </div>
+                            </div>
+                            <div class="session-controls">
+                                <button id="startSessionBtn" class="btn btn-primary">
+                                    <i class="fas fa-play"></i> Start
+                                </button>
+                                <button id="pauseSessionBtn" class="btn btn-secondary" style="display: none;">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button id="stopSessionBtn" class="btn btn-danger">
+                                    <i class="fas fa-stop"></i> Exit
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Panel -->
+                        <div class="analytics-section">
+                            <div class="session-header">
+                                <h2 id="sessionExerciseName">Exercise Name</h2>
+                                <span class="session-timer">00:00</span>
+                            </div>
+
+                            <!-- Real-Time Metrics -->
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-repeat"></i>
+                                    </div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Repetitions</div>
+                                        <div class="metric-value" id="repCounter">0</div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-angle-right"></i>
+                                    </div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Joint Angle</div>
+                                        <div class="metric-value" id="jointAngle">0°</div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Quality Score</div>
+                                        <div class="metric-value" id="qualityScore">0%</div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-heartbeat"></i>
+                                    </div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Fatigue Level</div>
+                                        <div class="metric-value" id="fatigueLevel">Low</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Posture Status -->
+                            <div class="status-container">
+                                <div class="status-item">
+                                    <div class="status-label">Posture Status</div>
+                                    <div class="status-value" id="postureStatus">
+                                        <span class="status-badge status-good">✓ Correct</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Message -->
+                            <div class="ai-message-box">
+                                <div class="ai-header">
+                                    <i class="fas fa-robot"></i>
+                                    <span>AI Guidance</span>
+                                </div>
+                                <div id="aiMessage" class="ai-text">
+                                    Position yourself in front of the camera to begin...
+                                </div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="session-progress">
+                                <div class="progress-item">
+                                    <span>Session Progress</span>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="progressBar"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="quick-actions-session">
+                                <button class="btn btn-outline btn-small" id="chatBtn">
+                                    <i class="fas fa-comments"></i> Ask AI
+                                </button>
+                                <button class="btn btn-outline btn-small" id="tipsBtn">
+                                    <i class="fas fa-lightbulb"></i> Tips
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORTS PAGE -->
+            <div id="reportsPage" class="page">
+                <div class="page-header">
+                    <div>
+                        <h1>Progress Reports</h1>
+                        <p>AI-Generated Recovery Insights</p>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                </div>
+
+                <!-- Summary Report -->
+                <section class="report-section">
+                    <h2>Weekly Summary</h2>
+                    <div class="report-cards">
+                        <div class="report-card">
+                            <h3>Sessions Completed</h3>
+                            <div class="report-number">6</div>
+                            <p class="report-description">Out of 7 planned sessions</p>
+                        </div>
+                        <div class="report-card">
+                            <h3>Total Reps</h3>
+                            <div class="report-number">240</div>
+                            <p class="report-description">+25% from last week</p>
+                        </div>
+                        <div class="report-card">
+                            <h3>Avg Quality</h3>
+                            <div class="report-number">87%</div>
+                            <p class="report-description">Consistent improvement</p>
+                        </div>
+                        <div class="report-card">
+                            <h3>ROM Progress</h3>
+                            <div class="report-number">+15°</div>
+                            <p class="report-description">Increased mobility</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AI Generated Report -->
+                <section class="report-section">
+                    <h2>AI Recovery Report</h2>
+                    <div class="ai-report-container">
+                        <div class="ai-report-content">
+                            <h3>Your Recovery Progress</h3>
+                            <p>Based on your recent exercise sessions, your shoulder mobility has improved significantly. Your form quality remains consistent at 87%, indicating excellent exercise execution. The AI system recommends gradually increasing resistance in your workouts as you've demonstrated readiness for progression.</p>
+                            
+                            <h4>Key Findings:</h4>
+                            <ul class="findings-list">
+                                <li>✓ Excellent consistency - 6 out of 7 sessions completed</li>
+                                <li>✓ Quality score above target - maintaining 87% average</li>
+                                <li>✓ Range of motion improvement - 15° increase detected</li>
+                                <li>⚠ Slight fatigue detected in last session - recommend rest day</li>
+                                <li>✓ Form accuracy improving - fewer corrections needed</li>
+                            </ul>
+
+                            <h4>Recommendations:</h4>
+                            <ol class="recommendations-list">
+                                <li>Continue current exercise plan - showing excellent results</li>
+                                <li>Take a light rest day tomorrow</li>
+                                <li>Consider adding resistance band exercises next week</li>
+                                <li>Practice shoulder external rotation more frequently</li>
+                                <li>Maintain current hydration and recovery routine</li>
+                            </ol>
+                        </div>
+                        <div class="ai-indicator">
+                            <i class="fas fa-brain"></i>
+                            <span>Agentic AI Analysis</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Graphs -->
+                <section class="report-section">
+                    <h2>Detailed Metrics</h2>
+                    <div class="report-graphs">
+                        <div class="graph-container">
+                            <h3>ROM Trend</h3>
+                            <canvas id="romChart"></canvas>
+                        </div>
+                        <div class="graph-container">
+                            <h3>Quality Over Time</h3>
+                            <canvas id="timeChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- REHAB PLAN PAGE -->
+            <div id="rehabPlanPage" class="page">
+                <div class="page-header">
+                    <div>
+                        <h1>Personalized Rehab Plan</h1>
+                        <p>Agentic AI-Generated Recovery Schedule</p>
+                    </div>
+                </div>
+
+                <div class="rehab-plan-container">
+                    <!-- Week Selector -->
+                    <div class="week-selector">
+                        <button class="week-btn" data-week="1" style="background: #1E88E5; color: white;">Week 1</button>
+                        <button class="week-btn" data-week="2">Week 2</button>
+                        <button class="week-btn" data-week="3">Week 3</button>
+                        <button class="week-btn" data-week="4">Week 4</button>
+                    </div>
+
+                    <!-- Week 1 Plan -->
+                    <div class="week-plan active" id="week1">
+                        <div class="week-header">
+                            <h2>Week 1: Mobility & Activation</h2>
+                            <p>Focus on gentle range of motion and muscle activation</p>
+                            <div class="week-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 60%;"></div>
+                                </div>
+                                <span>3 of 5 sessions completed</span>
+                            </div>
+                        </div>
+
+                        <div class="daily-plans">
+                            <div class="daily-plan">
+                                <h3>Monday - Mobility</h3>
+                                <div class="exercises-list">
+                                    <div class="exercise-item">
+                                        <div class="exercise-checkbox">
+                                            <input type="checkbox" checked>
+                                        </div>
+                                        <div class="exercise-details">
+                                            <div class="exercise-name">Shoulder Flexion</div>
+                                            <div class="exercise-params">8 reps × 3 sets</div>
+                                        </div>
+                                    </div>
+                                    <div class="exercise-item">
+                                        <div class="exercise-checkbox">
+                                            <input type="checkbox" checked>
+                                        </div>
+                                        <div class="exercise-details">
+                                            <div class="exercise-name">Pendulum Swings</div>
+                                            <div class="exercise-params">10 reps × 2 sets</div>
+                                        </div>
+                                    </div>
+                                    <div class="exercise-item">
+                                        <div class="exercise-checkbox">
+                                            <input type="checkbox">
+                                        </div>
+                                        <div class="exercise-details">
+                                            <div class="exercise-name">Internal Rotation</div>
+                                            <div class="exercise-params">6 reps × 3 sets</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="daily-plan">
+                                <h3>Tuesday - Rest / Light Activity</h3>
+                                <p class="rest-day">✓ Recovery day - Light walking recommended</p>
+                            </div>
+
+                            <div class="daily-plan">
+                                <h3>Wednesday - Activation</h3>
+                                <div class="exercises-list">
+                                    <div class="exercise-item">
+                                        <div class="exercise-checkbox">
+                                            <input type="checkbox">
+                                        </div>
+                                        <div class="exercise-details">
+                                            <div class="exercise-name">Shoulder Abduction</div>
+                                            <div class="exercise-params">8 reps × 3 sets</div>
+                                        </div>
+                                    </div>
+                                    <div class="exercise-item">
+                                        <div class="exercise-checkbox">
+                                            <input type="checkbox">
+                                        </div>
+                                        <div class="exercise-details">
+                                            <div class="exercise-name">External Rotation</div>
+                                            <div class="exercise-params">6 reps × 3 sets</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ai-recommendations">
+                            <h3><i class="fas fa-lightbulb"></i> AI Recommendations for Week 1</h3>
+                            <ul>
+                                <li>Focus on Pain-Free Range of Motion</li>
+                                <li>Perform exercises slowly and controlled</li>
+                                <li>No weight resistance during this phase</li>
+                                <li>Ice after sessions if swelling occurs</li>
+                                <li>Aim for 3-4 sessions per week</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Week 2 Plan -->
+                    <div class="week-plan" id="week2">
+                        <div class="week-header">
+                            <h2>Week 2: Strength Development</h2>
+                            <p>Introduce light resistance and build strength</p>
+                        </div>
+                        <p style="text-align: center; padding: 2rem; color: #999;">Week 2 plan will unlock as you progress through Week 1</p>
+                    </div>
+
+                    <!-- Week 3 Plan -->
+                    <div class="week-plan" id="week3">
+                        <div class="week-header">
+                            <h2>Week 3: Endurance Training</h2>
+                            <p>Increase repetitions and duration</p>
+                        </div>
+                        <p style="text-align: center; padding: 2rem; color: #999;">Week 3 plan will unlock as you progress through Week 2</p>
+                    </div>
+
+                    <!-- Week 4 Plan -->
+                    <div class="week-plan" id="week4">
+                        <div class="week-header">
+                            <h2>Week 4: Advanced Challenges</h2>
+                            <p>Complex movements and functional training</p>
+                        </div>
+                        <p style="text-align: center; padding: 2rem; color: #999;">Week 4 plan will unlock as you progress through Week 3</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS PAGE -->
+            <div id="settingsPage" class="page">
+                <div class="page-header">
+                    <h1>Settings & Profile</h1>
+                    <p>Manage your account and preferences</p>
+                </div>
+
+                <div class="settings-container">
+                    <!-- Profile Section -->
+                    <section class="settings-section">
+                        <h2>Profile Information</h2>
+                        <div class="profile-form">
+                            <div class="profile-picture">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="Profile">
+                                <button class="btn btn-outline btn-small">Change Photo</button>
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" value="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" value="john.doe@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" value="+1 (555) 123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" value="1990-01-15">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Injury & Goals -->
+                    <section class="settings-section">
+                        <h2>Medical Information</h2>
+                        <div class="form-group">
+                            <label>Primary Injury</label>
+                            <select>
+                                <option selected>Shoulder Injury</option>
+                                <option>Knee Injury</option>
+                                <option>Hip Injury</option>
+                                <option>Back Pain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Rehab Goal</label>
+                            <input type="text" value="Full shoulder mobility recovery">
+                        </div>
+                        <div class="form-group">
+                            <label>Any Allergies or Conditions</label>
+                            <textarea rows="3" placeholder="Add any relevant medical information..."></textarea>
+                        </div>
+                    </section>
+
+                    <!-- Preferences -->
+                    <section class="settings-section">
+                        <h2>Preferences</h2>
+                        <div class="preference-item">
+                            <label>Voice Guidance</label>
+                            <input type="checkbox" class="toggle-switch" checked>
+                        </div>
+                        <div class="preference-item">
+                            <label>Notifications</label>
+                            <input type="checkbox" class="toggle-switch" checked>
+                        </div>
+                        <div class="preference-item">
+                            <label>Daily Reminders</label>
+                            <input type="checkbox" class="toggle-switch" checked>
+                        </div>
+                        <div class="form-group">
+                            <label>Preferred Exercise Time</label>
+                            <select>
+                                <option>Morning (6 AM - 12 PM)</option>
+                                <option selected>Afternoon (12 PM - 6 PM)</option>
+                                <option>Evening (6 PM - 12 AM)</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <!-- Privacy & Security -->
+                    <section class="settings-section">
+                        <h2>Privacy & Security</h2>
+                        <button class="btn btn-outline">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                        <button class="btn btn-outline" style="margin-top: 1rem;">
+                            <i class="fas fa-shield-alt"></i> Two-Factor Authentication
+                        </button>
+                        <button class="btn btn-outline" style="margin-top: 1rem;">
+                            <i class="fas fa-download"></i> Download My Data
+                        </button>
+                    </section>
+
+                    <!-- Danger Zone -->
+                    <section class="settings-section danger-zone">
+                        <h2>Danger Zone</h2>
+                        <button class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete Account
+                        </button>
+                    </section>
+
+                    <!-- Save Button -->
+                    <div class="settings-footer">
+                        <button class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Chatbot Button -->
+        <button class="floating-chat-btn" id="floatingChatBtn">
+            <i class="fas fa-comments"></i>
+            <span class="chat-unread">2</span>
+        </button>
+
+        <!-- Chatbot Widget -->
+        <div class="chatbot-widget" id="chatbotWidget">
+            <div class="chatbot-header">
+                <div>
+                    <h3>PhysioAssistant</h3>
+                    <p>Always here to help</p>
+                </div>
+                <button class="close-btn" id="closeChatBot">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot-message">
+                    <i class="fas fa-robot"></i>
+                    <p>Hello! How can I assist you with your recovery today?</p>
+                </div>
+            </div>
+            <div class="chatbot-input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="chatbotInput" placeholder="Ask me about exercises...">
+                    <button id="sendChatBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="quick-replies">
+                    <button class="quick-reply-btn" data-query="exercise tips">Tips</button>
+                    <button class="quick-reply-btn" data-query="safety guidelines">Safety</button>
+                    <button class="quick-reply-btn" data-query="next exercise">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Popup -->
+        <div class="notification" id="notification" style="display: none;">
+            <div class="notification-content">
+                <i class="fas fa-check-circle"></i>
+                <span id="notificationText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script_professional.js"></script>
+    <script src="voice-assistant.js"></script>
+</body>
+</html>

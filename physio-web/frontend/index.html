@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysioMonitor - AI-Powered Physiotherapy</title>
+    <link rel="stylesheet" href="style.css?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="fas fa-heartbeat"></i></div>
+                <div class="brand-text">
+                    <h2>PhysioMonitor</h2>
+                    <span>AI Healthcare</span>
+                </div>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-label">MAIN</span>
+                    <a href="#" class="nav-item active" data-page="home" data-i18n="home"><i class="fas fa-home"></i><span data-i18n="home">Home</span></a>
+                    <a href="#" class="nav-item" data-page="dashboard" data-i18n="dashboard"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></a>
+                    <a href="#" class="nav-item" data-page="exercises" data-i18n="exercises"><i class="fas fa-dumbbell"></i><span data-i18n="exercises">Exercises</span></a>
+                </div>
+                <div class="nav-section">
+                    <span class="nav-section-label">TRACKING</span>
+                    <a href="#" class="nav-item" data-page="reports" data-i18n="reports"><i class="fas fa-chart-line"></i><span data-i18n="reports">Reports</span></a>
+                    <a href="#" class="nav-item" data-page="rehabPlan" data-i18n="rehabPlan"><i class="fas fa-clipboard-list"></i><span data-i18n="rehabPlan">Rehab Plan</span></a>
+                </div>
+                <div class="nav-section">
+                    <span class="nav-section-label">SUPPORT</span>
+                    <a href="#" class="nav-item" data-page="chatbot" data-i18n="aiAssistant"><i class="fas fa-robot"></i><span data-i18n="aiAssistant">AI Assistant</span></a>
+                    <a href="#" class="nav-item" data-page="settings" data-i18n="settings"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-user" id="sidebarUser">
+                    <div class="sidebar-user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="sidebar-user-info">
+                        <span class="sidebar-user-name">Guest</span>
+                        <span class="sidebar-user-role">Patient</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN WRAPPER ==================== -->
+        <div class="main-wrapper">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="hamburger-btn" id="sidebarToggleBtn" style="display:none;"><i class="fas fa-bars"></i></button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search exercises, reports..." id="globalSearch">
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-icon-btn notif-btn" id="notificationBtn" role="button" tabindex="0" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notif-badge" id="notifBadge">3</span>
+                        <div class="notif-dropdown" id="notifDropdown">
+                            <div class="notif-header"><span data-i18n="notifications">Notifications</span><button class="btn btn-ghost btn-xs" id="clearAllNotifs">Clear all</button></div>
+                            <div class="notif-list" id="notifList">
+                                <div class="notif-item unread" data-action="dashboard">
+                                    <div class="notif-icon ni-green"><i class="fas fa-chart-line"></i></div>
+                                    <div class="notif-body"><p>Your shoulder mobility improved 15% this week!</p><span>2 hours ago</span></div>
+                                </div>
+                                <div class="notif-item unread" data-action="exercises">
+                                    <div class="notif-icon ni-blue"><i class="fas fa-dumbbell"></i></div>
+                                    <div class="notif-body"><p>New exercise added: Advanced Hip Rotation</p><span>5 hours ago</span></div>
+                                </div>
+                                <div class="notif-item unread" data-action="rehabPlan">
+                                    <div class="notif-icon ni-orange"><i class="fas fa-clipboard-list"></i></div>
+                                    <div class="notif-body"><p>Week 2 rehab plan is ready for you</p><span>1 day ago</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="topbar-divider"></div>
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-avatar-circle"><i class="fas fa-user"></i></div>
+                        <span class="topbar-username" id="topbarUserName">Guest</span>
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" id="loginBtn" data-i18n="login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                            <a href="#" id="registerNavBtn" data-i18n="register"><i class="fas fa-user-plus"></i> Register</a>
+                            <a href="#" id="logoutBtn" data-i18n="logout" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ==================== CONTENT AREA ==================== -->
+            <main class="content-area">
+                <!-- Navigation (hidden, kept for script.js compatibility) -->
+                <nav class="navbar" style="display:none;">
+                    <div class="nav-container">
+                        <div class="nav-menu">
+                            <a href="#" class="nav-link active" data-page="home">Home</a>
+                            <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
+                            <a href="#" class="nav-link" data-page="exercises">Exercises</a>
+                            <a href="#" class="nav-link" data-page="chatbot">Chatbot</a>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- ===== HOME PAGE ===== -->
+                <div id="homePage" class="page active">
+                    <section class="hero">
+                        <div class="hero-shapes">
+                            <div class="h-shape h-shape-1"></div>
+                            <div class="h-shape h-shape-2"></div>
+                            <div class="h-shape h-shape-3"></div>
+                            <div class="h-shape h-shape-4"></div>
+                        </div>
+                        <div class="hero-content">
+                            <div class="hero-text">
+                                <span class="hero-badge"><i class="fas fa-bolt"></i> AI-Powered Platform</span>
+                                <h1>Intelligent<br><span class="text-gradient">Physiotherapy</span><br>Monitoring</h1>
+                                <p class="hero-desc">Real-time posture correction, adaptive rehabilitation programs, and AI-driven insights for your recovery journey.</p>
+                                <div class="hero-btns">
+                                    <button class="btn btn-primary btn-lg" onclick="showPage('exercises')"><i class="fas fa-play-circle"></i> Start Therapy</button>
+                                </div>
+                                <div class="hero-stats-row">
+                                    <div class="hero-stat"><strong>28+</strong><span>Exercises</span></div>
+                                    <div class="hero-stat-sep"></div>
+                                    <div class="hero-stat"><strong>8</strong><span>Body Areas</span></div>
+                                    <div class="hero-stat-sep"></div>
+                                    <div class="hero-stat"><strong>AI</strong><span>Powered</span></div>
+                                </div>
+                            </div>
+                            <div class="hero-visual">
+                                <div class="hero-illustration">
+                                    <div class="illus-floating-card fc-1"><i class="fas fa-heartbeat"></i><span>Tracking</span></div>
+                                    <div class="illus-floating-card fc-2"><i class="fas fa-chart-line"></i><span>Analytics</span></div>
+                                    <div class="illus-floating-card fc-3"><i class="fas fa-brain"></i><span>AI</span></div>
+                                    <div class="illus-center">
+                                        <i class="fas fa-person-running"></i>
+                                        <div class="pulse-ring"></div>
+                                        <div class="pulse-ring pr-delay-1"></div>
+                                        <div class="pulse-ring pr-delay-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="features-section">
+                        <div class="section-head">
+                            <span class="section-tag">Features</span>
+                            <h2>Everything You Need for Recovery</h2>
+                            <p>Comprehensive tools powered by artificial intelligence</p>
+                        </div>
+                        <div class="features-grid">
+                            <div class="feature-card"><div class="feature-icon fi-blue"><i class="fas fa-video"></i></div><h3>Real-Time Camera Tracking</h3><p>MediaPipe-powered pose detection tracks 33 body landmarks with sub-pixel accuracy</p></div>
+                            <div class="feature-card"><div class="feature-icon fi-teal"><i class="fas fa-chart-bar"></i></div><h3>Progress Dashboard</h3><p>Visual analytics showing session trends, quality scores, and recovery milestones</p></div>
+                            <div class="feature-card"><div class="feature-icon fi-purple"><i class="fas fa-brain"></i></div><h3>AI Recommendations</h3><p>Intelligent exercise suggestions based on performance history and recovery goals</p></div>
+                            <div class="feature-card"><div class="feature-icon fi-green"><i class="fas fa-volume-up"></i></div><h3>Voice Guidance</h3><p>Audio cues for form correction, rep counting, and motivational feedback</p></div>
+                        </div>
+                    </section>
+
+                    <section class="how-it-works">
+                        <div class="section-head">
+                            <span class="section-tag">Process</span>
+                            <h2>How It Works</h2>
+                            <p>Get started in four simple steps</p>
+                        </div>
+                        <div class="steps-row">
+                            <div class="step-card"><div class="step-num">01</div><div class="step-icon"><i class="fas fa-hand-pointer"></i></div><h3>Select Exercise</h3><p>Choose from 28+ exercises across 8 body categories</p></div>
+                            <div class="step-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                            <div class="step-card"><div class="step-num">02</div><div class="step-icon"><i class="fas fa-camera"></i></div><h3>Position Camera</h3><p>Stand in front of your camera for pose detection</p></div>
+                            <div class="step-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                            <div class="step-card"><div class="step-num">03</div><div class="step-icon"><i class="fas fa-comments"></i></div><h3>Get Feedback</h3><p>Receive real-time form correction and guidance</p></div>
+                            <div class="step-arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+                            <div class="step-card"><div class="step-num">04</div><div class="step-icon"><i class="fas fa-trophy"></i></div><h3>Track Progress</h3><p>Monitor improvement with detailed analytics</p></div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ===== DASHBOARD PAGE ===== -->
+                <div id="dashboardPage" class="page">
+                    <div class="page-top">
+                        <div class="page-top-left"><h1>Dashboard</h1><p class="page-sub" id="dashboardGreeting">Welcome back! Here's your latest progress.</p></div>
+                        <div class="page-top-right">
+                            <select id="dashboardTimeFilter" class="select-modern" onchange="updateDashboardTimeFilter()">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="all">All Time</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" onclick="refreshDashboardData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-stats">
+                        <div class="stat-card sc-blue"><div class="sc-icon"><i class="fas fa-fire"></i></div><div class="sc-body"><span class="sc-val" id="totalSessions">0</span><span class="sc-label">Total Sessions</span><span class="sc-trend neutral" id="trendSessions"><i class="fas fa-minus"></i> No data</span></div></div>
+                        <div class="stat-card sc-teal"><div class="sc-icon"><i class="fas fa-dumbbell"></i></div><div class="sc-body"><span class="sc-val" id="totalReps">0</span><span class="sc-label">Total Reps</span><span class="sc-trend neutral" id="trendReps"><i class="fas fa-minus"></i> No data</span></div></div>
+                        <div class="stat-card sc-purple"><div class="sc-icon"><i class="fas fa-star"></i></div><div class="sc-body"><span class="sc-val" id="avgQuality">0%</span><span class="sc-label">Avg Quality</span><span class="sc-trend neutral" id="trendQuality"><i class="fas fa-minus"></i> No data</span></div></div>
+                        <div class="stat-card sc-green"><div class="sc-icon"><i class="fas fa-calendar-check"></i></div><div class="sc-body"><span class="sc-val" id="daysActive">0</span><span class="sc-label">Days Active</span><span class="sc-trend neutral" id="trendDays"><i class="fas fa-minus"></i> No data</span></div></div>
+                        <div class="stat-card sc-orange"><div class="sc-icon"><i class="fas fa-fire-flame-curved"></i></div><div class="sc-body"><span class="sc-val" id="currentStreak">0</span><span class="sc-label">Day Streak</span><span class="sc-trend neutral" id="trendStreak"><i class="fas fa-minus"></i> No data</span></div></div>
+                        <div class="stat-card sc-red"><div class="sc-icon"><i class="fas fa-clock"></i></div><div class="sc-body"><span class="sc-val" id="totalDuration">0h</span><span class="sc-label">Total Duration</span><span class="sc-trend neutral" id="trendDuration"><i class="fas fa-minus"></i> No data</span></div></div>
+                    </div>
+
+                    <div class="charts-row">
+                        <div class="chart-card"><div class="cc-header"><h3><i class="fas fa-chart-area"></i> Weekly Activity</h3><span class="cc-badge">This Week</span></div><div class="cc-body"><canvas id="weeklyActivityChart"></canvas></div></div>
+                        <div class="chart-card"><div class="cc-header"><h3><i class="fas fa-chart-line"></i> Quality Trend</h3><span class="cc-badge">Progress</span></div><div class="cc-body"><canvas id="qualityTrendChart"></canvas></div></div>
+                    </div>
+
+                    <div class="dash-bottom">
+                        <div class="ai-panel"><div class="cc-header"><h3><i class="fas fa-brain"></i> AI Insights</h3></div><div class="ai-body" id="aiInsightsBody"><div class="empty-state-sm"><i class="fas fa-brain"></i><p>Complete some exercise sessions to receive AI-powered insights.</p></div></div></div>
+                        <div class="body-panel"><div class="cc-header"><h3><i class="fas fa-person"></i> Body Performance</h3></div><div id="bodyPartStats" class="body-part-grid"><div class="empty-state-sm"><i class="fas fa-person"></i><p>No exercise data yet. Start a session to track body performance.</p></div></div></div>
+                    </div>
+
+                    <div class="rom-section">
+                        <div class="cc-header"><h3><i class="fas fa-ruler-combined"></i> Range of Motion</h3></div>
+                        <div class="rom-grid" id="romGrid">
+                            <div class="rom-card"><span class="rom-joint">Shoulder</span><div class="rom-bar"><div class="rom-fill" id="romShoulderFill" style="width:0%"></div></div><span class="rom-val" id="romShoulderVal">0° / 180°</span></div>
+                            <div class="rom-card"><span class="rom-joint">Elbow</span><div class="rom-bar"><div class="rom-fill" id="romElbowFill" style="width:0%"></div></div><span class="rom-val" id="romElbowVal">0° / 170°</span></div>
+                            <div class="rom-card"><span class="rom-joint">Knee</span><div class="rom-bar"><div class="rom-fill" id="romKneeFill" style="width:0%"></div></div><span class="rom-val" id="romKneeVal">0° / 170°</span></div>
+                            <div class="rom-card"><span class="rom-joint">Hip</span><div class="rom-bar"><div class="rom-fill" id="romHipFill" style="width:0%"></div></div><span class="rom-val" id="romHipVal">0° / 120°</span></div>
+                        </div>
+                    </div>
+
+                    <div class="session-history">
+                        <div class="cc-header"><h3><i class="fas fa-history"></i> Session History</h3>
+                            <div class="sh-controls">
+                                <div class="sh-date-filter">
+                                    <input type="date" id="sessionDateFilter" class="input-modern input-sm" onchange="filterSessionsByDate()" title="Filter by date">
+                                    <button class="btn btn-ghost btn-xs" id="clearDateFilter" onclick="clearSessionDateFilter()" title="Clear date filter" style="display:none;"><i class="fas fa-times"></i></button>
+                                </div>
+                                <input type="text" id="sessionSearch" placeholder="Search..." class="input-modern input-sm" oninput="filterSessionsBySearch()">
+                                <select id="sessionSort" class="select-modern select-sm" onchange="updateSessionSort()"><option value="recent">Most Recent</option><option value="quality">Highest Quality</option><option value="reps">Most Reps</option></select>
+                            </div>
+                        </div>
+                        <div id="dateFilterBanner" class="date-filter-banner" style="display:none;">
+                            <i class="fas fa-calendar-day"></i>
+                            <span id="dateFilterLabel">Showing sessions for: </span>
+                            <button class="btn btn-ghost btn-xs" onclick="clearSessionDateFilter()">Show All</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table id="exerciseTable" class="data-table">
+                                <thead><tr>
+                                    <th onclick="sortExerciseTable(0)">Exercise <i class="fas fa-sort"></i></th>
+                                    <th onclick="sortExerciseTable(1)">Total Reps <i class="fas fa-sort"></i></th>
+                                    <th onclick="sortExerciseTable(2)">Best Reps <i class="fas fa-sort"></i></th>
+                                    <th onclick="sortExerciseTable(3)">Sessions <i class="fas fa-sort"></i></th>
+                                    <th onclick="sortExerciseTable(4)">Avg Quality <i class="fas fa-sort"></i></th>
+                                    <th>Last Session</th>
+                                </tr></thead>
+                                <tbody id="exerciseTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="sessionsList" class="sessions-list"></div>
+                    </div>
+                </div>
+
+                <!-- ===== EXERCISES PAGE ===== -->
+                <div id="exercisesPage" class="page">
+                    <div class="page-top">
+                        <div class="page-top-left"><h1>Exercise Categories</h1><p class="page-sub">Select a body area to begin your therapy session</p></div>
+                        <div class="page-top-right"><button class="btn btn-primary btn-sm" onclick="loadAllExercises()"><i class="fas fa-list"></i> View All</button></div>
+                    </div>
+                    <div class="exercise-categories">
+                        <div class="category-card" data-category="Neck"><div class="cat-icon ci-neck"><i class="fas fa-head-side-mask"></i></div><div class="cat-info"><h3>Neck</h3><p>Stretches and mobility exercises</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Shoulder"><div class="cat-icon ci-shoulder"><i class="fas fa-hand-rock"></i></div><div class="cat-info"><h3>Shoulder</h3><p>Strengthening and flexibility</p><span class="cat-count">6 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Elbow"><div class="cat-icon ci-elbow"><i class="fas fa-hand-fist"></i></div><div class="cat-info"><h3>Elbow</h3><p>Joint exercises and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Wrist"><div class="cat-icon ci-wrist"><i class="fas fa-hand"></i></div><div class="cat-info"><h3>Wrist</h3><p>Mobility and strengthening</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Hip"><div class="cat-icon ci-hip"><i class="fas fa-person-walking"></i></div><div class="cat-info"><h3>Hip</h3><p>Joint mobility exercises</p><span class="cat-count">4 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Knee"><div class="cat-icon ci-knee"><i class="fas fa-bone"></i></div><div class="cat-info"><h3>Knee</h3><p>Strengthening and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Ankle"><div class="cat-icon ci-ankle"><i class="fas fa-shoe-prints"></i></div><div class="cat-info"><h3>Ankle</h3><p>Stability and mobility</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Squat"><div class="cat-icon ci-squat"><i class="fas fa-person-arrow-down-to-line"></i></div><div class="cat-info"><h3>Squats</h3><p>Full body strength</p><span class="cat-count">5 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                    </div>
+                </div>
+
+                <!-- ===== EXERCISE LIST PAGE ===== -->
+                <div id="exerciseListPage" class="page">
+                    <div class="page-top"><div class="page-top-left"><button class="btn btn-ghost btn-sm" onclick="showPage('exercises')"><i class="fas fa-arrow-left"></i> Back</button><h1 id="categoryTitle">Category Exercises</h1></div></div>
+                    <div id="exerciseList" class="exercise-list"></div>
+                </div>
+
+                <!-- ===== ALL EXERCISES PAGE ===== -->
+                <div id="allExercisesPage" class="page">
+                    <div class="page-top"><div class="page-top-left"><button class="btn btn-ghost btn-sm" onclick="showPage('exercises')"><i class="fas fa-arrow-left"></i> Back</button><h1>All Exercises</h1></div></div>
+                    <div class="filter-bar">
+                        <button class="filter-chip active" onclick="filterExercises(this, 'all')">All</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Neck')">Neck</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Shoulder')">Shoulder</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Elbow')">Elbow</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Wrist')">Wrist</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Hip')">Hip</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Knee')">Knee</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Ankle')">Ankle</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Squat')">Squat</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Back')">Back</button>
+                    </div>
+                    <div id="allExercisesList" class="exercise-list"></div>
+                </div>
+
+                <!-- ===== EXERCISE SESSION PAGE ===== -->
+                <div id="exercisePage" class="page">
+                    <div class="session-layout">
+                        <div class="session-camera">
+                            <div class="session-bar">
+                                <button class="btn btn-ghost btn-sm" onclick="exitExercise()"><i class="fas fa-arrow-left"></i> Exit</button>
+                                <h2 id="exerciseTitle">Exercise Session</h2>
+                                <div class="session-timer" id="sessionTimer">00:00</div>
+                            </div>
+                            <div class="video-container">
+                                <video id="videoElement" autoplay playsinline></video>
+                                <canvas id="overlayCanvas"></canvas>
+                                <img id="skeletonDisplay" style="display:none;width:100%;height:100%;object-fit:cover;">
+                                <div id="cameraPlaceholder" class="camera-placeholder"><div class="cam-ph-inner"><i class="fas fa-video"></i><p>Click <strong>"Start Camera"</strong> to begin</p></div></div>
+                                <div class="cam-overlay-top"><span class="rec-badge" id="recordingIndicator"><span class="rec-dot"></span> REC</span></div>
+                            </div>
+                            <div class="session-ctrls">
+                                <button id="startBtn" class="btn btn-primary"><i class="fas fa-play"></i> Start Camera</button>
+                                <button id="pauseBtn" class="btn btn-warning" style="display:none;"><i class="fas fa-pause"></i> Pause</button>
+                                <button id="resetBtn" class="btn btn-outline"><i class="fas fa-redo"></i> Reset</button>
+
+                            </div>
+                        </div>
+                        <div class="session-analytics">
+                            <div class="sa-header"><h3>Real-Time Analytics</h3></div>
+                            <div class="metric-card mc-primary"><div class="mc-icon"><i class="fas fa-redo-alt"></i></div><div class="mc-body"><span class="mc-label">Repetitions</span><span class="mc-val" id="repCount">0</span></div></div>
+                            <div class="metric-card mc-teal"><div class="mc-icon"><i class="fas fa-drafting-compass"></i></div><div class="mc-body"><span class="mc-label">Joint Angle</span><span class="mc-val" id="jointAngle">0°</span></div></div>
+                            <div class="metric-card mc-green"><div class="mc-icon"><i class="fas fa-star"></i></div><div class="mc-body"><span class="mc-label">Quality Score</span><span class="mc-val" id="qualityScore">0%</span></div><div class="quality-bar"><div class="quality-fill" id="qualityBar" style="width:0%"></div></div></div>
+                            <div class="metric-card mc-blue"><div class="mc-icon"><i class="fas fa-eye"></i></div><div class="mc-body"><span class="mc-label">Pose Detection</span><span class="mc-val mc-sm" id="landmarksStatus">Not Detected</span></div></div>
+                            <div class="posture-card"><h4><i class="fas fa-user-check"></i> Posture</h4><div id="postureFeedback" class="posture-status"><span class="posture-badge good">Correct</span></div></div>
+                            <div class="fatigue-card" id="fatigueWarning" style="display:none;"><i class="fas fa-exclamation-triangle"></i><span>Fatigue Detected</span></div>
+                            <div class="ai-msg-card"><h4><i class="fas fa-lightbulb"></i> Exercise Feedback</h4><p id="voiceMessage">Begin your exercise to receive feedback.</p></div>
+                            <div class="cur-exercise-card"><span class="ce-label">Current Exercise</span><span class="ce-name" id="currentExercise">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== REPORTS PAGE ===== -->
+                <div id="reportsPage" class="page">
+                    <div class="page-top"><div class="page-top-left"><h1>Progress & Reports</h1><p class="page-sub">AI-generated recovery insights and analytics</p></div><div class="page-top-right"><button class="btn btn-primary btn-sm" onclick="generatePDFReport()"><i class="fas fa-file-pdf"></i> Download PDF</button></div></div>
+                    <div class="report-summary-row" id="rptSummaryRow">
+                        <div class="rpt-card"><div class="rpt-icon ri-blue"><i class="fas fa-calendar-week"></i></div><div class="rpt-body"><h4>Total Sessions</h4><p class="rpt-val" id="rptTotalSessions">--</p><span class="rpt-trend" id="rptWeeklyTrend"><i class="fas fa-minus"></i> No data yet</span></div></div>
+                        <div class="rpt-card"><div class="rpt-icon ri-green"><i class="fas fa-check-double"></i></div><div class="rpt-body"><h4>Days Active</h4><p class="rpt-val" id="rptDaysActive">--</p><span class="rpt-trend" id="rptActiveTrend"><i class="fas fa-minus"></i> No data yet</span></div></div>
+                        <div class="rpt-card"><div class="rpt-icon ri-purple"><i class="fas fa-chart-pie"></i></div><div class="rpt-body"><h4>Quality Average</h4><p class="rpt-val" id="rptQualityAvg">--</p><span class="rpt-trend" id="rptQualityTrend"><i class="fas fa-minus"></i> No data yet</span></div></div>
+                    </div>
+                    <div class="charts-row">
+                        <div class="chart-card"><div class="cc-header"><h3><i class="fas fa-chart-line"></i> Recovery Progress</h3></div><div class="cc-body"><canvas id="recoveryProgressChart"></canvas></div></div>
+                        <div class="chart-card"><div class="cc-header"><h3><i class="fas fa-chart-bar"></i> Exercise Distribution</h3></div><div class="cc-body"><canvas id="exerciseDistributionChart"></canvas></div></div>
+                    </div>
+                    <div class="ai-report">
+                        <div class="cc-header"><h3><i class="fas fa-file-medical-alt"></i> AI Recovery Report</h3><span class="cc-badge">Auto-generated</span></div>
+                        <div class="air-body" id="aiReportBody">
+                            <div class="air-section"><h4>Executive Summary</h4><p>No session data available yet. Complete some exercises to generate your AI recovery report.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== REHAB PLAN PAGE ===== -->
+                <div id="rehabPlanPage" class="page">
+                    <!-- Step 1: Injury & Goal Selection -->
+                    <div id="rehabSelector" class="rehab-selector">
+                        <div class="page-top"><div class="page-top-left"><h1>Personalized Rehabilitation Plan</h1><p class="page-sub">Select your injury location and rehabilitation goals to generate a custom recovery program</p></div></div>
+
+                        <!-- Injury Location -->
+                        <div class="rehab-section">
+                            <h2 class="rehab-section-title"><i class="fas fa-map-marker-alt"></i> Step 1: Select Injury Location</h2>
+                            <div class="injury-grid" id="injuryGrid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Rehab Goals -->
+                        <div class="rehab-section">
+                            <h2 class="rehab-section-title"><i class="fas fa-bullseye"></i> Step 2: Select Rehabilitation Goals</h2>
+                            <p class="rehab-hint">You can select multiple goals</p>
+                            <div class="goal-grid" id="goalGrid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Difficulty -->
+                        <div class="rehab-section">
+                            <h2 class="rehab-section-title"><i class="fas fa-layer-group"></i> Step 3: Difficulty Level</h2>
+                            <div class="difficulty-pills" id="difficultyPills">
+                                <button class="diff-pill active" data-diff="Beginner"><i class="fas fa-seedling"></i> Beginner</button>
+                                <button class="diff-pill" data-diff="Intermediate"><i class="fas fa-fire"></i> Intermediate</button>
+                                <button class="diff-pill" data-diff="Advanced"><i class="fas fa-bolt"></i> Advanced</button>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="rehab-submit-row">
+                            <button class="btn btn-primary btn-lg rehab-generate-btn" id="generatePlanBtn" disabled>
+                                <i class="fas fa-magic"></i> Generate My Rehab Plan
+                            </button>
+                            <p class="rehab-submit-hint" id="generateHint">Please select an injury location and at least one goal</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Generated Plan Display -->
+                    <div id="rehabPlanResult" class="rehab-plan-result" style="display:none;">
+                        <div class="page-top">
+                            <div class="page-top-left">
+                                <h1 id="planTitle">Your Rehabilitation Plan</h1>
+                                <p class="page-sub" id="planOverview"></p>
+                            </div>
+                            <div class="page-top-right">
+                                <button class="btn btn-outline btn-sm" onclick="showRehabSelector()"><i class="fas fa-arrow-left"></i> Change Selections</button>
+                                <button class="btn btn-outline btn-sm" onclick="printRehabPlan()"><i class="fas fa-print"></i> Print Plan</button>
+                            </div>
+                        </div>
+
+                        <!-- Plan Summary Cards -->
+                        <div class="plan-summary-cards" id="planSummaryCards"></div>
+
+                        <!-- Day-by-day plan -->
+                        <div class="plan-days" id="planDays"></div>
+                    </div>
+                </div>
+
+                <!-- ===== CHATBOT PAGE ===== -->
+                <div id="chatbotPage" class="page">
+                    <div class="page-top"><div class="page-top-left"><h1>AI Physiotherapy Assistant</h1><p class="page-sub">Ask questions about exercises, posture, recovery, and your session data</p></div>
+                    <div class="page-top-right"><button class="btn btn-outline btn-sm" onclick="clearChatHistory()"><i class="fas fa-trash-alt"></i> Clear Chat</button></div></div>
+                    <div class="chatbot-container">
+                        <div class="chatbot-messages" id="chatMessages">
+                            <div class="message bot-message">
+                                <div class="msg-avatar"><i class="fas fa-robot"></i></div>
+                                <div class="message-content">
+                                    <p>Hello! I'm your <strong>AI Physiotherapy Assistant</strong>. I can help with:</p>
+                                    <ul>
+                                        <li><strong>Exercise Guidance</strong> — step-by-step instructions for 20+ exercises</li>
+                                        <li><strong>Posture Correction</strong> — explaining form errors and fixes</li>
+                                        <li><strong>Dashboard Help</strong> — understanding quality scores, rep counts, trends</li>
+                                        <li><strong>Safety & Recovery</strong> — when to stop, ice vs heat, rehab stages</li>
+                                        <li><strong>Session Data</strong> — interpreting your current exercise metrics</li>
+                                    </ul>
+                                    <p>How can I help you today?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-context-bar" id="chatContextBar" style="display:none;"></div>
+                        <div class="chat-quick-btns">
+                            <button class="qb" onclick="sendQuickMessage('List all exercises')"><i class="fas fa-list"></i> Exercise List</button>
+                            <button class="qb" onclick="askSafetyTip()"><i class="fas fa-shield-alt"></i> Safety Tip</button>
+                            <button class="qb" onclick="sendQuickMessage('Give me posture tips')"><i class="fas fa-user-check"></i> Posture Tips</button>
+                            <button class="qb" onclick="sendQuickMessage('What exercises for shoulder pain?')"><i class="fas fa-question-circle"></i> Shoulder Help</button>
+                            <button class="qb" onclick="sendQuickMessage('What does my quality score mean?')"><i class="fas fa-chart-bar"></i> Dashboard Help</button>
+                            <button class="qb" onclick="sendQuickMessage('Tell me about rehabilitation stages')"><i class="fas fa-clipboard-list"></i> Rehab Stages</button>
+                            <button class="qb" onclick="sendQuickMessage('How many reps should I do?')"><i class="fas fa-redo-alt"></i> Rep Guidance</button>
+                            <button class="qb" onclick="askMotivation()"><i class="fas fa-heart"></i> Motivate Me</button>
+                        </div>
+                        <div class="chatbot-input">
+                            <div class="ci-wrap">
+                                <input type="text" id="chatInput" placeholder="Ask anything about physiotherapy..." autocomplete="off">
+                                <button class="ci-voice" id="chatVoiceBtn" onclick="toggleChatVoiceInput()" title="Voice Input"><i class="fas fa-microphone"></i></button>
+                                <button id="sendBtn" class="ci-send"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== SETTINGS PAGE ===== -->
+                <div id="settingsPage" class="page">
+                    <div class="page-top">
+                        <div class="page-top-left">
+                            <h1><i class="fas fa-cog" style="color:var(--primary);margin-right:10px;"></i>Settings</h1>
+                            <p class="page-sub">Manage your account, preferences, and application settings</p>
+                        </div>
+                        <div class="page-top-right">
+                            <span class="stg-saved-indicator" id="stgSavedIndicator"><i class="fas fa-check-circle"></i> All changes saved</span>
+                        </div>
+                    </div>
+
+                    <div class="stg-layout">
+                        <!-- Settings Sidebar Tabs -->
+                        <nav class="stg-sidebar" id="stgSidebar">
+                            <button class="stg-tab active" data-stg-tab="account"><i class="fas fa-user-circle"></i><span>Account</span></button>
+                            <button class="stg-tab" data-stg-tab="health"><i class="fas fa-notes-medical"></i><span>Health Profile</span></button>
+                            <button class="stg-tab" data-stg-tab="ai"><i class="fas fa-brain"></i><span>AI Assistant</span></button>
+
+                            <button class="stg-tab" data-stg-tab="tracking"><i class="fas fa-video"></i><span>Tracking</span></button>
+                            <button class="stg-tab" data-stg-tab="notifications"><i class="fas fa-bell"></i><span>Notifications</span></button>
+                            <button class="stg-tab" data-stg-tab="appearance"><i class="fas fa-palette"></i><span>Appearance</span></button>
+                            <button class="stg-tab" data-stg-tab="privacy"><i class="fas fa-shield-alt"></i><span>Privacy</span></button>
+                        </nav>
+
+                        <!-- Settings Content Panels -->
+                        <div class="stg-content">
+
+                            <!-- ─── ACCOUNT ─── -->
+                            <div class="stg-panel active" id="stgPanel-account">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon"><i class="fas fa-user-circle"></i></div>
+                                    <div>
+                                        <h2>Account Settings</h2>
+                                        <p>Manage your profile information and security</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Profile Picture</h3>
+                                    <div class="stg-avatar-row">
+                                        <div class="stg-avatar" id="stgAvatar">
+                                            <i class="fas fa-user"></i>
+                                            <img src="" alt="" id="stgAvatarImg" style="display:none;">
+                                        </div>
+                                        <div class="stg-avatar-actions">
+                                            <button class="btn btn-primary btn-sm" onclick="document.getElementById('stgAvatarInput').click()"><i class="fas fa-upload"></i> Upload Photo</button>
+                                            <button class="btn btn-ghost btn-sm" onclick="removeAvatar()"><i class="fas fa-trash"></i> Remove</button>
+                                            <input type="file" id="stgAvatarInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                                            <p class="stg-hint">JPG, PNG or GIF. Max 2MB.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Personal Information</h3>
+                                    <div class="stg-form-grid">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-user"></i> Display Name</label>
+                                            <input type="text" class="input-modern" placeholder="Your full name" id="settingsName">
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-envelope"></i> Email Address</label>
+                                            <input type="email" class="input-modern" placeholder="your@email.com" id="settingsEmail">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Change Password</h3>
+                                    <div class="stg-form-stack">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-lock"></i> Current Password</label>
+                                            <div class="input-password-wrap">
+                                                <input type="password" class="input-modern" placeholder="Enter current password" id="stgCurrentPwd" autocomplete="current-password">
+                                                <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="stg-form-grid">
+                                            <div class="form-group">
+                                                <label><i class="fas fa-key"></i> New Password</label>
+                                                <div class="input-password-wrap">
+                                                    <input type="password" class="input-modern" placeholder="Min 6 characters" id="stgNewPwd" autocomplete="new-password">
+                                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label><i class="fas fa-key"></i> Confirm Password</label>
+                                                <div class="input-password-wrap">
+                                                    <input type="password" class="input-modern" placeholder="Repeat new password" id="stgConfirmPwd" autocomplete="new-password">
+                                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="changeSettingsPassword()" id="stgChangePwdBtn"><i class="fas fa-save"></i> Update Password</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── HEALTH PROFILE ─── -->
+                            <div class="stg-panel" id="stgPanel-health">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-teal"><i class="fas fa-notes-medical"></i></div>
+                                    <div>
+                                        <h2>Health Profile</h2>
+                                        <p>Help us personalize your rehabilitation experience</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Injury &amp; Goals</h3>
+                                    <div class="stg-form-grid">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-band-aid"></i> Injury Type</label>
+                                            <select class="select-modern" id="settingsInjury">
+                                                <option value="">Select injury type</option>
+                                                <option>Shoulder Injury</option>
+                                                <option>Knee Injury</option>
+                                                <option>Back Pain</option>
+                                                <option>Hip Injury</option>
+                                                <option>Neck Pain</option>
+                                                <option>Elbow Injury</option>
+                                                <option>Wrist Injury</option>
+                                                <option>Ankle Sprain</option>
+                                                <option>Post-Surgery</option>
+                                                <option>General Fitness</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-bullseye"></i> Rehab Goal</label>
+                                            <select class="select-modern" id="settingsGoal">
+                                                <option value="">Select primary goal</option>
+                                                <option>Pain Reduction</option>
+                                                <option>Increase ROM</option>
+                                                <option>Build Strength</option>
+                                                <option>Return to Sport</option>
+                                                <option>Daily Mobility</option>
+                                                <option>Post-Surgical Recovery</option>
+                                                <option>Prevent Re-injury</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Physical Details</h3>
+                                    <div class="stg-form-grid stg-grid-3">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-birthday-cake"></i> Age</label>
+                                            <input type="number" class="input-modern" placeholder="e.g. 35" min="10" max="120" id="stgAge">
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-ruler-vertical"></i> Height (cm)</label>
+                                            <input type="number" class="input-modern" placeholder="e.g. 175" min="50" max="250" id="stgHeight">
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-weight"></i> Weight (kg)</label>
+                                            <input type="number" class="input-modern" placeholder="e.g. 70" min="20" max="300" id="stgWeight">
+                                        </div>
+                                    </div>
+                                    <div class="stg-form-grid" style="margin-top:4px;">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-hand-paper"></i> Dominant Side</label>
+                                            <select class="select-modern" id="stgDominantSide">
+                                                <option value="">Select side</option>
+                                                <option value="right">Right</option>
+                                                <option value="left">Left</option>
+                                                <option value="ambidextrous">Ambidextrous</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── AI ASSISTANT ─── -->
+                            <div class="stg-panel" id="stgPanel-ai">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-purple"><i class="fas fa-brain"></i></div>
+                                    <div>
+                                        <h2>AI Assistant Settings</h2>
+                                        <p>Configure AI-powered coaching and recommendations</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Coaching Preferences</h3>
+                                    <div class="stg-toggle-list">
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Enable AI Coaching</div>
+                                                <div class="stg-toggle-desc">Get real-time AI-powered feedback during exercise sessions</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgAiCoaching" checked><span class="toggle-slider"></span></label>
+                                        </div>
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Adaptive Rehab Recommendations</div>
+                                                <div class="stg-toggle-desc">Let the AI adapt exercise plans based on your progress and performance</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgAdaptiveRehab" checked><span class="toggle-slider"></span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Exercise Difficulty</h3>
+                                    <p class="stg-card-desc">Choose the default difficulty level for AI-suggested exercises</p>
+                                    <div class="stg-difficulty-selector" id="stgDifficulty">
+                                        <button class="stg-diff-btn active" data-diff="beginner"><i class="fas fa-seedling"></i><span>Beginner</span><small>Slow pace, low intensity</small></button>
+                                        <button class="stg-diff-btn" data-diff="intermediate"><i class="fas fa-running"></i><span>Intermediate</span><small>Moderate pace &amp; load</small></button>
+                                        <button class="stg-diff-btn" data-diff="advanced"><i class="fas fa-fire"></i><span>Advanced</span><small>High intensity focus</small></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── VOICE GUIDANCE ─── -->
+                            <div class="stg-panel" id="stgPanel-voice">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-green"><i class="fas fa-volume-up"></i></div>
+                                    <div>
+                                        <h2>Voice Guidance Settings</h2>
+                                        <p>Control audio feedback during your sessions</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Voice Feedback</h3>
+                                    <div class="stg-toggle-list">
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Enable Voice Feedback</div>
+                                                <div class="stg-toggle-desc">Hear spoken cues and corrections while exercising</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="voiceEnabled"><span class="toggle-slider"></span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Voice Controls</h3>
+                                    <div class="stg-slider-group">
+                                        <label class="stg-slider-label"><i class="fas fa-tachometer-alt"></i> Voice Speed <span class="stg-slider-val" id="voiceSpeedVal">0.9×</span></label>
+                                        <input type="range" class="stg-range" min="0.5" max="2" step="0.1" value="0.9" id="voiceSpeed">
+                                        <div class="stg-range-labels"><span>Slow</span><span>Normal</span><span>Fast</span></div>
+                                    </div>
+                                    <div class="stg-slider-group">
+                                        <label class="stg-slider-label"><i class="fas fa-volume-down"></i> Volume <span class="stg-slider-val" id="voiceVolumeVal">80%</span></label>
+                                        <input type="range" class="stg-range" min="0" max="1" step="0.05" value="0.8" id="voiceVolume">
+                                        <div class="stg-range-labels"><span>Mute</span><span>Medium</span><span>Max</span></div>
+                                    </div>
+                                    <button class="btn btn-ghost btn-sm" onclick="testVoiceSettings()" style="margin-top:8px;"><i class="fas fa-play-circle"></i> Test Voice</button>
+                                </div>
+                            </div>
+
+                            <!-- ─── TRACKING ─── -->
+                            <div class="stg-panel" id="stgPanel-tracking">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-orange"><i class="fas fa-video"></i></div>
+                                    <div>
+                                        <h2>Tracking Settings</h2>
+                                        <p>Configure camera, pose detection, and motion sensitivity</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Camera</h3>
+                                    <div class="stg-form-stack">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-camera"></i> Camera Device</label>
+                                            <select class="select-modern" id="stgCamera">
+                                                <option value="">Default Camera</option>
+                                            </select>
+                                            <p class="stg-hint">Select which camera to use for pose tracking</p>
+                                        </div>
+                                        <button class="btn btn-ghost btn-sm" onclick="refreshCameraList()"><i class="fas fa-sync-alt"></i> Refresh Camera List</button>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Pose Overlay</h3>
+                                    <div class="stg-toggle-list">
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Skeleton Overlay</div>
+                                                <div class="stg-toggle-desc">Display skeletal pose landmarks over the camera feed during sessions</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgSkeletonOverlay" checked><span class="toggle-slider"></span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Motion Sensitivity</h3>
+                                    <div class="stg-slider-group">
+                                        <label class="stg-slider-label"><i class="fas fa-crosshairs"></i> Detection Sensitivity <span class="stg-slider-val" id="stgSensitivityVal">Medium</span></label>
+                                        <input type="range" class="stg-range" min="1" max="5" step="1" value="3" id="stgSensitivity">
+                                        <div class="stg-range-labels"><span>Low</span><span>Medium</span><span>High</span></div>
+                                    </div>
+                                    <p class="stg-hint">Higher sensitivity detects smaller movements but may increase false positives.</p>
+                                </div>
+                            </div>
+
+                            <!-- ─── NOTIFICATIONS ─── -->
+                            <div class="stg-panel" id="stgPanel-notifications">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-orange"><i class="fas fa-bell"></i></div>
+                                    <div>
+                                        <h2>Notification Settings</h2>
+                                        <p>Choose which alerts and reminders you receive</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Reminders</h3>
+                                    <div class="stg-toggle-list">
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Exercise Reminders</div>
+                                                <div class="stg-toggle-desc">Get notified when it's time for your scheduled exercises</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgExerciseReminders" checked><span class="toggle-slider"></span></label>
+                                        </div>
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Rehab Plan Alerts</div>
+                                                <div class="stg-toggle-desc">Receive alerts about rehab plan updates and milestones</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgRehabAlerts" checked><span class="toggle-slider"></span></label>
+                                        </div>
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Email Notifications</div>
+                                                <div class="stg-toggle-desc">Receive weekly progress reports and plan updates via email</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="stgEmailNotifs"><span class="toggle-slider"></span></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── APPEARANCE ─── -->
+                            <div class="stg-panel" id="stgPanel-appearance">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-purple"><i class="fas fa-palette"></i></div>
+                                    <div>
+                                        <h2>Appearance</h2>
+                                        <p>Customize the look and feel of the application</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Theme</h3>
+                                    <div class="stg-toggle-list">
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Dark Mode</div>
+                                                <div class="stg-toggle-desc">Switch to a darker color scheme for low-light environments</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="darkMode"><span class="toggle-slider"></span></label>
+                                        </div>
+                                        <div class="stg-toggle-item">
+                                            <div class="stg-toggle-info">
+                                                <div class="stg-toggle-label">Compact Sidebar</div>
+                                                <div class="stg-toggle-desc">Collapse sidebar to icons only for more workspace area</div>
+                                            </div>
+                                            <label class="toggle"><input type="checkbox" id="compactSidebar"><span class="toggle-slider"></span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Font Size</h3>
+                                    <p class="stg-card-desc">Adjust the base text size across the application</p>
+                                    <div class="stg-font-selector" id="stgFontSize">
+                                        <button class="stg-font-btn" data-size="small"><span style="font-size:12px;">A</span><small>Small</small></button>
+                                        <button class="stg-font-btn active" data-size="medium"><span style="font-size:15px;">A</span><small>Medium</small></button>
+                                        <button class="stg-font-btn" data-size="large"><span style="font-size:18px;">A</span><small>Large</small></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ─── PRIVACY ─── -->
+                            <div class="stg-panel" id="stgPanel-privacy">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-red"><i class="fas fa-shield-alt"></i></div>
+                                    <div>
+                                        <h2>Privacy &amp; Data</h2>
+                                        <p>Manage your health data and account</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Export Health Data</h3>
+                                    <p class="stg-card-desc">Download all your exercise sessions, progress data, and rehab history as a JSON file.</p>
+                                    <button class="btn btn-primary btn-sm" onclick="exportHealthData()"><i class="fas fa-download"></i> Export My Data</button>
+                                </div>
+
+                                <div class="stg-card stg-card-danger">
+                                    <h3><i class="fas fa-exclamation-triangle" style="color:var(--red);margin-right:8px;"></i>Danger Zone</h3>
+                                    <p class="stg-card-desc">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteAccount()" id="stgDeleteAccountBtn"><i class="fas fa-trash-alt"></i> Delete My Account</button>
+                                </div>
+                            </div>
+
+                        </div><!-- /stg-content -->
+                    </div><!-- /stg-layout -->
+
+                    <!-- Sticky Save Bar -->
+                    <div class="stg-save-bar" id="stgSaveBar">
+                        <div class="stg-save-bar-inner">
+                            <span class="stg-save-bar-text"><i class="fas fa-info-circle"></i> You have unsaved changes</span>
+                            <div class="stg-save-bar-actions">
+                                <button class="btn btn-ghost btn-sm" onclick="discardSettingsChanges()">Discard</button>
+                                <button class="btn btn-primary btn-sm" onclick="saveAllSettings()" id="stgSaveBtn"><i class="fas fa-save"></i> Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- ==================== LOGIN MODAL ==================== -->
+        <div id="loginModal" class="modal-overlay">
+            <div class="modal-split">
+                <div class="modal-left">
+                    <div class="modal-left-content">
+                        <div class="ml-brand"><i class="fas fa-heartbeat"></i></div>
+                        <h2>PhysioMonitor</h2>
+                        <p>Your AI-powered rehabilitation partner</p>
+                        <div class="ml-features">
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Real-time pose tracking</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> AI-powered feedback</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> 28+ guided exercises</div>
+                        </div>
+                        <div class="ml-shapes"><div class="mls mls-1"></div><div class="mls mls-2"></div><div class="mls mls-3"></div></div>
+                    </div>
+                </div>
+                <div class="modal-right">
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <div class="mr-content">
+                        <h2>Welcome Back</h2>
+                        <p class="mr-sub">Sign in to continue your recovery journey</p>
+                        <div id="loginAlert" class="modal-alert" style="display:none;"></div>
+                        <form id="loginForm" novalidate>
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Username</label>
+                                <input type="text" name="username" id="username" class="input-modern" placeholder="Enter your username" required autocomplete="username">
+                                <span class="field-error" id="loginUsernameError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="password" id="password" class="input-modern" placeholder="Enter your password" required autocomplete="current-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                                <span class="field-error" id="loginPasswordError"></span>
+                            </div>
+                            <div class="form-inline">
+                                <label class="cb-label"><input type="checkbox" id="rememberMe"> Remember me</label>
+                                <a href="#" class="link-muted" id="forgotPasswordLink">Forgot Password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full btn-login-submit" id="loginSubmitBtn">
+                                <i class="fas fa-sign-in-alt"></i> <span>Sign In</span>
+                            </button>
+                        </form>
+                        <p class="mr-footer">Don't have an account? <a href="#" id="showRegister">Create one free</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== REGISTER MODAL ==================== -->
+        <div id="registerModal" class="modal-overlay">
+            <div class="modal-split">
+                <div class="modal-left">
+                    <div class="modal-left-content">
+                        <div class="ml-brand"><i class="fas fa-user-plus"></i></div>
+                        <h2>Join PhysioMonitor</h2>
+                        <p>Start your recovery journey today</p>
+                        <div class="ml-features">
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Free personalized rehab plan</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Track your progress</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> AI coaching & guidance</div>
+                        </div>
+                        <div class="ml-shapes"><div class="mls mls-1"></div><div class="mls mls-2"></div><div class="mls mls-3"></div></div>
+                    </div>
+                </div>
+                <div class="modal-right">
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <div class="mr-content">
+                        <h2>Create Account</h2>
+                        <p class="mr-sub">Fill in your details to get started — it's free!</p>
+                        <div id="registerAlert" class="modal-alert" style="display:none;"></div>
+                        <form id="registerForm" novalidate>
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Username</label>
+                                <input type="text" name="username" id="regUsername" class="input-modern" placeholder="Choose a username (min 3 chars)" required autocomplete="username">
+                                <span class="field-error" id="regUsernameError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> Email</label>
+                                <input type="email" name="email" id="regEmail" class="input-modern" placeholder="your@email.com" required autocomplete="email">
+                                <span class="field-error" id="regEmailError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-id-card"></i> Full Name</label>
+                                <input type="text" name="full_name" id="regFullName" class="input-modern" placeholder="Your full name" autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="password" id="regPassword" class="input-modern" placeholder="Min 6 characters" required autocomplete="new-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                                <span class="field-error" id="regPasswordError"></span>
+                                <div class="password-strength" id="passwordStrength">
+                                    <div class="ps-bar"><div class="ps-fill" id="psFill"></div></div>
+                                    <span class="ps-text" id="psText"></span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="cb-label terms-label"><input type="checkbox" id="agreeTerms" required> I agree to the <a href="#" class="link-muted">Terms of Service</a> and <a href="#" class="link-muted">Privacy Policy</a></label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full btn-register-submit" id="registerSubmitBtn">
+                                <i class="fas fa-user-plus"></i> <span>Create Account</span>
+                            </button>
+                        </form>
+                        <p class="mr-footer">Already have an account? <a href="#" id="showLogin">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- TOAST -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- ==================== FORGOT PASSWORD MODAL ==================== -->
+        <div id="forgotPasswordModal" class="modal-overlay">
+            <div class="modal-split">
+                <div class="modal-left">
+                    <div class="modal-left-content">
+                        <div class="ml-brand"><i class="fas fa-key"></i></div>
+                        <h2>Reset Password</h2>
+                        <p>We'll help you get back into your account</p>
+                        <div class="ml-features">
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Enter your username &amp; email</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Set a new password</div>
+                            <div class="ml-feat"><i class="fas fa-check-circle"></i> Sign in immediately</div>
+                        </div>
+                        <div class="ml-shapes"><div class="mls mls-1"></div><div class="mls mls-2"></div><div class="mls mls-3"></div></div>
+                    </div>
+                </div>
+                <div class="modal-right">
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                    <div class="mr-content">
+                        <h2>Reset Your Password</h2>
+                        <p class="mr-sub">Verify your identity and set a new password</p>
+                        <div id="forgotAlert" class="modal-alert" style="display:none;"></div>
+                        <form id="forgotPasswordForm" novalidate>
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Username</label>
+                                <input type="text" name="username" id="fpUsername" class="input-modern" placeholder="Enter your username" required autocomplete="username">
+                                <span class="field-error" id="fpUsernameError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> Email</label>
+                                <input type="email" name="email" id="fpEmail" class="input-modern" placeholder="Enter your registered email" required autocomplete="email">
+                                <span class="field-error" id="fpEmailError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> New Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="new_password" id="fpNewPassword" class="input-modern" placeholder="Enter new password (min 6 chars)" required autocomplete="new-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                                <span class="field-error" id="fpNewPasswordError"></span>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> Confirm New Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="confirm_password" id="fpConfirmPassword" class="input-modern" placeholder="Confirm new password" required autocomplete="new-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                                <span class="field-error" id="fpConfirmPasswordError"></span>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full" id="forgotSubmitBtn">
+                                <i class="fas fa-key"></i> <span>Reset Password</span>
+                            </button>
+                        </form>
+                        <p class="mr-footer">Remember your password? <a href="#" id="backToLogin">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DEMO VIDEO MODAL ==================== -->
+    <div id="demoVideoModal" class="modal-overlay" onclick="handleDemoModalBackdrop(event)">
+        <div class="demo-modal-box" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+            <div class="demo-modal-header">
+                <div class="demo-modal-title-row">
+                    <span class="demo-modal-icon"><i class="fas fa-film"></i></span>
+                    <h2 id="demoModalTitle">Exercise Demo</h2>
+                </div>
+                <button class="modal-close demo-close-btn" onclick="closeDemoVideo()" aria-label="Close demo">&times;</button>
+            </div>
+            <div class="demo-modal-body">
+                <div class="demo-video-wrap">
+                    <video id="demoVideoPlayer" class="demo-video-player" controls playsinline preload="metadata">
+                        <source id="demoVideoSource" src="" type="video/mp4">
+                        <p class="demo-no-video">Your browser does not support the video tag.</p>
+                    </video>
+                    <div id="demoVideoPlaceholder" class="demo-video-placeholder">
+                        <div class="dvp-inner">
+                            <i class="fas fa-film"></i>
+                            <p id="demoPlaceholderMsg">Demo video coming soon for this exercise.</p>
+                            <span class="dvp-sub">Follow the text instructions below to perform this exercise correctly.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-tips-section">
+                    <h4><i class="fas fa-check-circle"></i> Correct Technique Tips</h4>
+                    <div id="demoTipsList" class="demo-tips-list"></div>
+                </div>
+            </div>
+            <div class="demo-modal-footer">
+                <button class="btn btn-outline" onclick="closeDemoVideo()"><i class="fas fa-times"></i> Close</button>
+                <button class="btn btn-primary" id="demoStartBtn" onclick="closeDemoAndStart()">
+                    <i class="fas fa-play"></i> Start Exercise Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SMART START REMINDER MODAL ==================== -->
+    <div id="startReminderModal" class="modal-overlay" onclick="handleReminderBackdrop(event)">
+        <div class="reminder-modal-box" role="dialog" aria-modal="true">
+            <div class="reminder-icon-wrap"><i class="fas fa-lightbulb"></i></div>
+            <h3>Ready to begin?</h3>
+            <p id="reminderExerciseName" class="reminder-exercise-name"></p>
+            <p class="reminder-msg">Watching the demo video first helps you maintain correct posture and get the most out of your session.</p>
+            <div class="reminder-actions">
+                <button class="btn btn-outline" onclick="closeReminderAndOpenDemo()">
+                    <i class="fas fa-film"></i> Watch Demo First
+                </button>
+                <button class="btn btn-primary" onclick="closeReminderAndStart()">
+                    <i class="fas fa-play"></i> Start Anyway
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="debugPanel" class="debug-panel" style="display:none;"></div>
+
+    <script src="config.js?v=1"></script>
+    <script src="script.js?v=14"></script>
+    
+    <!-- New Module Scripts (in dependency order) -->
+    <script src="i18n.js?v=1"></script>
+    <script src="loading-manager.js?v=1"></script>
+    <script src="voice-assistant-system.js?v=1"></script>
+    <script src="physio-chatbot.js?v=1"></script>
+    <script src="injury-predictor.js?v=1"></script>
+    <script src="therapist-dashboard.js?v=1"></script>
+    
+    <!-- Integration Module (must run after all modules) -->
+    <script src="integration.js?v=1"></script>
+    
+    <!-- Existing Enhancement Scripts -->
+    <script src="voice-assistant.js?v=3"></script>
+    <script src="voice-control.js?v=1"></script>
+    <script src="ui-enhancements.js?v=6"></script>
+</body>
+</html>

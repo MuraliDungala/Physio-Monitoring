@@ -1,0 +1,22 @@
+# Railway.app Deployment Configuration
+# Deploy: railway up
+
+[build]
+builder = "dockerfile"
+dockerfile = "backend/Dockerfile"
+
+[deploy]
+startCommand = "python -m uvicorn app:app --host 0.0.0.0 --port $PORT"
+restartPolicyMaxRetries = 5
+healthcheckPath = "/health"
+healthcheckInterval = 30
+
+[env]
+ENVIRONMENT = "production"
+PORT = "8000"
+PYTHONUNBUFFERED = "1"
+
+# Secret environment variables (set via Railway dashboard):
+# - SECRET_KEY: Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+# - DATABASE_URL: Your PostgreSQL connection string
+# - CORS_ORIGINS: Your production domain

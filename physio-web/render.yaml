@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: physio-monitoring-backend
+    runtime: python
+    runtimeVersion: 3.10
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app:app --host 0.0.0.0 --port $PORT
+    
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://your-frontend-domain.vercel.app,https://your-domain.com
+      - key: PORT
+        value: "8000"
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Auto-deployment from Git
+    autoDeploy: true
+    
+    # Instance configuration
+    plan: starter
+    numInstances: 1
+    
+    # Disk
+    disk:
+      name: physio_db
+      mountPath: /app/data
+      sizeGB: 10
+
+  - type: pserv
+    name: postgres-db
+    ipAddress: 10.5.0.2
+    runtime: postgres
+    runtimeVersion: 15
+    region: ohio
+    databases:
+      - name: physio_monitoring_prod
+        user: physio_user
+    disk:
+      name: postgres_data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 20
+
+# Static site for frontend
+  - type: static_site
+    name: physio-monitoring-frontend
+    buildCommand: cd ../frontend && npm install && npm run build
+    staticPublicPath: dist
+    publishPath: ../frontend/dist
+    routes:
+      - path: /*
+        destination: /index.html
+
+# Environment variable group (reference in services)
+env:
+  LOG_LEVEL: info
+  ENABLE_ADVANCED_ML: "true"
+  ENABLE_VOICE: "true"
+  ML_MODEL_PATH: ./ml_models

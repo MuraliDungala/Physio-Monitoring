@@ -1,0 +1,268 @@
+═══════════════════════════════════════════════════════════════════════════════
+SHOULDER & KNEE FIX - ROOT CAUSE ANALYSIS & SOLUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM IDENTIFIED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User report: "Shoulder and knee showing 0 for all values"
+
+Root Cause #1: VISIBILITY CHECK TOO STRICT
+┌─────────────────────────────────────────────────────────────────────────┐
+│ File: frontend/script.js                                                │
+│ Function: calculateJointAngles() → calculateAngle()                     │
+│                                                                          │
+│ OLD CODE (lines 1305-1308):                                             │
+│   if (!isLandmarkVisible(p1) || !isLandmarkVisible(p2) || !isLandmarkVisible(p3)) {
+│       return null;  // ← Returns null if ANY landmark visibility < 0.5  │
+│   }                                                                      │
+│                                                                          │
+│ PROBLEM: Hip landmarks (23, 24) are body reference points              │
+│ ├─ They're detected with lower confidence (~0.3-0.6)                   │
+│ ├─ When used for shoulder angles, calculation returns null            │
+│ └─ Results: angles.shoulderLeft = undefined → displays as 0            │
+│                                                                          │
+│ FIXED CODE:                                                             │
+│   // Check coordinates exist (essential)                                │
+│   if (!p1.x || !p1.y || !p2.x || !p2.y || !p3.x || !p3.y) {           │
+│       return null;                                                      │
+│   }                                                                      │
+│   // Only check visibility for the main joint (p2)                     │
+│   if (isLandmarkVisible(p2, 0.3) === false) {                          │
+│       return null;                                                      │
+│   }                                                                      │
+│   // Use coordinates for reference points (p1, p3) even if visibility lower
+│                                                                          │
+│ RESULT: Angles calculate correctly even with low-visibility hips       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Root Cause #2: LANDMARK VISIBILITY THRESHOLD TOO HIGH  
+┌─────────────────────────────────────────────────────────────────────────┐
+│ File: frontend/script.js                                                │
+│ Function: areLandmarksVisibleForExercise()                              │
+│                                                                          │
+│ OLD CODE (line 1289):                                                   │
+│   for (const idx of required) {                                         │
+│       if (!isLandmarkVisible(landmarks[idx], 0.5)) { // ← All landmarks
+│           return false;  // ← Rejects exercise if hip visibility < 0.5 │
+│       }                                                                  │
+│   }                                                                      │
+│                                                                          │
+│ PROBLEM: This prevents shoulder exercises from running                 │
+│ ├─ Hip landmarks 23, 24 have visibility ~0.3-0.5                       │
+│ ├─ Function returns false → rep counting skipped entirely              │
+│ └─ User sees 0 reps, 0 angle, 0 everything                             │
+│                                                                          │
+│ FIXED CODE:                                                             │
+│   // Use different thresholds for reference vs. joint points            │
+│   const isHipLandmark = [23, 24].includes(idx);                        │
+│   const threshold = isHipLandmark ? 0.2 : 0.5;  // Hip threshold lower │
+│                                                                          │
+│ RESULT: Shoulder exercises can proceed with lower hip visibility       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+FIXES APPLIED
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ FIX #1: calculateJointAngles() function (script.js ~line 1300)
+   Location: calculateAngle helper function
+   Change: Relaxed visibility requirement for reference points
+   Impact: Shoulder/knee angles now calculate even with low-visibility hips
+
+✅ FIX #2: areLandmarksVisibleForExercise() function (script.js ~line 1289)
+   Location: Landmark visibility check loop
+   Change: Hip landmarks use 0.2 threshold, joints use 0.5 threshold
+   Impact: Shoulder/knee exercises now proceed with visible hips+joints
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS FIXES THE ISSUE
+═══════════════════════════════════════════════════════════════════════════════
+
+ELBOW EXERCISES (Already working):
+  ✓ Uses: shoulder → elbow → wrist
+  ├─ All three are arm landmarks
+  ├─ All have high visibility when arm raised
+  └─ No body reference points needed → No visibility issues
+  
+SHOULDER EXERCISES (Now fixed):
+  ✓ Uses: hip → shoulder → elbow
+  ├─ Hip is body reference (can have lower visibility)
+  ├─ Shoulder & elbow have high visibility when moving
+  ├─ OLD: Failed if hip visibility < 0.5
+  └─ NEW: Accepts hip with visibility > 0.2
+  
+KNEE EXERCISES (Now fixed):
+  ✓ Uses: hip → knee → ankle  
+  ├─ Hip is body reference (can have lower visibility)
+  ├─ Knee & ankle have high visibility when bending
+  ├─ OLD: Failed if hip visibility < 0.5
+  └─ NEW: Accepts hip with visibility > 0.2
+
+═══════════════════════════════════════════════════════════════════════════════
+WHAT TO DO NOW
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: HARD REFRESH BROWSER (CRITICAL!)
+   Windows/Linux: Ctrl + Shift + R
+   Mac: Cmd + Shift + R
+   
+   ⚠️  Just pressing F5 won't work - browser will cache old script.js
+   ⚠️  You MUST do hard refresh to load the fixed code
+
+STEP 2: OPEN BROWSER DEVELOPER CONSOLE
+   Press: F12 → Click "Console" tab
+   Keep it open while testing - shows debug messages
+
+STEP 3: TEST SHOULDER FLEXION
+   
+   Action:
+   1. Select "Shoulder Flexion" from dropdown
+   2. Click "Start Camera"
+   3. Slowly raise arm from side to overhead
+   4. Complete one full cycle down→up→down
+   
+   Expected in console:
+   ┌──────────────────────────────────────────────────────────┐
+   │ Shoulder Flexion phase: down (angle: 75.3°...)          │
+   │ Shoulder Flexion phase: up (angle: 125.8°...)           │
+   │ Rep counting: down → up                                  │
+   │ ✅ Rep counted! Total: 1                                │
+   │ Quality Score: ROM: 92% Smoothness: 88% Control: 90%    │
+   │ Overall Quality: 90%                                     │
+   └──────────────────────────────────────────────────────────┘
+   
+   Check: Are you seeing actual numbers (not 0)?
+
+STEP 4: TEST KNEE FLEXION
+
+   Action:
+   1. Select "Knee Flexion" from dropdown
+   2. Click "Start Camera"
+   3. Sit down
+   4. Slowly bend and straighten leg
+   5. Complete one full cycle extended→flexed→extended
+   
+   Expected in console:
+   ┌──────────────────────────────────────────────────────────┐
+   │ Knee Flexion phase: extended (angle: 165.2°...)         │
+   │ Knee Flexion phase: flexed (angle: 95.6°...)            │
+   │ Rep counting: extended → flexed                          │
+   │ ✅ Rep counted! Total: 1                                │
+   │ Quality Score: ROM: 88% Smoothness: 85% Control: 87%    │
+   │ Overall Quality: 87%                                     │
+   └──────────────────────────────────────────────────────────┘
+   
+   Check: Are you seeing actual numbers (not 0)?
+
+STEP 5: TEST ELBOW FLEXION (Control test)
+
+   Action:
+   1. Select "Elbow Flexion" from dropdown
+   2. Click "Start Camera"
+   3. Raise and lower arm
+   
+   Expected: Works perfectly (unchanged from before)
+   Check: If elbow stops working, something went wrong
+
+STEP 6: REPORT RESULTS
+
+   If working: ✅ "All three exercises showing angles and counting reps!"
+   
+   If issues: Tell us:
+   - Which exercise(s) still showing 0?
+   - What angle values appear in console (if any)?
+   - Any error messages in red in console?
+   - Can you see your joints clearly in camera?
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING DURING TESTING
+═══════════════════════════════════════════════════════════════════════════════
+
+ISSUE: Shoulder/Knee show 0 (still broken)
+───────────────────────────────────────────
+→ Check #1: Did you hard refresh? (Ctrl+Shift+R, not F5)
+→ Check #2: Open console - any red errors?
+→ Check #3: Can you see your hips in the camera?
+→ Check #4: Camera permissions granted?
+
+ISSUE: Console shows "Required landmarks not visible"
+──────────────────────────────────────────────────────
+→ Raise camera to show your hips/waist
+→ Make sure full body visible in frame
+→ Check lighting (avoid shadows on hips)
+
+ISSUE: Angle shows but rep not counting
+────────────────────────────────────────
+→ Move SLOWER through full range of motion
+→ Go all the way down and all the way up
+→ Hold briefly at top and bottom
+→ Phase transitions: watch console for "phase: down" → "phase: up"
+
+ISSUE: Console shows "Elbow Flexion" but selected "Shoulder Flexion"  
+──────────────────────────────────────────────────────────────────────
+→ Exercise auto-detection overriding selection
+→ Not a problem - if reps count that's fine
+→ But focus on manual selection in future
+
+═══════════════════════════════════════════════════════════════════════════════
+DETAILED DEBUG INFO FOR SUPPORT
+═══════════════════════════════════════════════════════════════════════════════
+
+If you experience issues, collect this info from console:
+
+Copy these debug statements from console and send to us:
+1. Are these lines appearing?
+   ✓ "Shoulder Flexion phase: ___ (angle: ___°...)"
+   ✓ "Rep counting: ___ → ___"
+   ✓ "✅ Rep counted! Total: 1"
+
+2. What values do you see?
+   - Shoulder Flexion angle ranges? (should be ~60-140°)
+   - Knee Flexion angle ranges? (should be ~45-140°)
+   - Does phase transition from down→up or extended→flexed?
+
+3. Any errors in red?
+   - Copy exact error message
+   - Note which exercise fails
+
+4. Camera clarity?
+   - Can you see shoulders clearly?
+   - Can you see elbows clearly?
+   - Can you see hips/waist clearly?
+   - Can you see knees clearly?
+
+═══════════════════════════════════════════════════════════════════════════════
+WHAT'S DIFFERENT NOW VS. BEFORE
+═══════════════════════════════════════════════════════════════════════════════
+
+BEFORE (Broken):
+├─ Elbow: ✅ Works (shoulder→elbow→wrist all high visibility)
+├─ Shoulder: ❌ Shows 0 (hip visibility check fails)
+├─ Knee: ❌ Shows 0 (hip visibility check fails)
+└─ Root cause: Hip landmarks too low confidence for strict 0.5 threshold
+
+AFTER (Fixed):
+├─ Elbow: ✅ Still works (unchanged)
+├─ Shoulder: ✅ Should work (hip threshold lowered to 0.2)
+├─ Knee: ✅ Should work (hip threshold lowered to 0.2)
+└─ Fixed: Hip reference points use separate lower threshold
+
+═══════════════════════════════════════════════════════════════════════════════
+FINAL CHECKLIST BEFORE TESTING
+═══════════════════════════════════════════════════════════════════════════════
+
+Before you test, verify:
+☐ Hard refreshed browser (Ctrl+Shift+R)
+☐ Backend running (python -m uvicorn backend.app:app --reload)
+☐ Frontend server running (python -m http.server 3000)  
+☐ Browser at http://localhost:3000
+☐ Webcam plugged in and working
+☐ Good lighting in room
+☐ Camera permissions granted to browser
+☐ Console open (F12) ready to watch for messages
+☐ Comfortable and ready to perform exercises
+
+READY? Let's test! 🚀
+
+═══════════════════════════════════════════════════════════════════════════════
