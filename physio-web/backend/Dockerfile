@@ -23,11 +23,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies only (including OpenCV's libGL requirement)
+# Install runtime dependencies only (including OpenCV requirements)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas0 \
     libgomp1 \
     libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder (system site-packages for all-user access)
