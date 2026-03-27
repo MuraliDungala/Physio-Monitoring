@@ -169,7 +169,7 @@ function setupEventListeners() {
     
     try {
         // Navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
+        document.querySelectorAll('.nav-item').forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
                 const page = this.dataset.page;
@@ -363,10 +363,10 @@ function showPage(pageName) {
     }
 
     // Update nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
+    document.querySelectorAll('.nav-item').forEach(link => {
         link.classList.remove('active');
     });
-    const activeLink = document.querySelector(`.nav-link[data-page="${pageName}"]`);
+    const activeLink = document.querySelector(`.nav-item[data-page="${pageName}"]`);
     if (activeLink) activeLink.classList.add('active');
 
     // Load page-specific data
