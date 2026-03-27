@@ -29,19 +29,19 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <span class="nav-section-label">MAIN</span>
-                    <a href="#" class="nav-item active" data-page="home" data-i18n="home"><i class="fas fa-home"></i><span data-i18n="home">Home</span></a>
-                    <a href="#" class="nav-item" data-page="dashboard" data-i18n="dashboard"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></a>
-                    <a href="#" class="nav-item" data-page="exercises" data-i18n="exercises"><i class="fas fa-dumbbell"></i><span data-i18n="exercises">Exercises</span></a>
+                    <a href="#" class="nav-item active" data-page="home" onclick="event.preventDefault(); showPage('home')" data-i18n="home"><i class="fas fa-home"></i><span data-i18n="home">Home</span></a>
+                    <a href="#" class="nav-item" data-page="dashboard" onclick="event.preventDefault(); showPage('dashboard')" data-i18n="dashboard"><i class="fas fa-th-large"></i><span data-i18n="dashboard">Dashboard</span></a>
+                    <a href="#" class="nav-item" data-page="exercises" onclick="event.preventDefault(); showPage('exercises')" data-i18n="exercises"><i class="fas fa-dumbbell"></i><span data-i18n="exercises">Exercises</span></a>
                 </div>
                 <div class="nav-section">
                     <span class="nav-section-label">TRACKING</span>
-                    <a href="#" class="nav-item" data-page="reports" data-i18n="reports"><i class="fas fa-chart-line"></i><span data-i18n="reports">Reports</span></a>
-                    <a href="#" class="nav-item" data-page="rehabPlan" data-i18n="rehabPlan"><i class="fas fa-clipboard-list"></i><span data-i18n="rehabPlan">Rehab Plan</span></a>
+                    <a href="#" class="nav-item" data-page="reports" onclick="event.preventDefault(); showPage('reports')" data-i18n="reports"><i class="fas fa-chart-line"></i><span data-i18n="reports">Reports</span></a>
+                    <a href="#" class="nav-item" data-page="rehabPlan" onclick="event.preventDefault(); showPage('rehabPlan')" data-i18n="rehabPlan"><i class="fas fa-clipboard-list"></i><span data-i18n="rehabPlan">Rehab Plan</span></a>
                 </div>
                 <div class="nav-section">
                     <span class="nav-section-label">SUPPORT</span>
-                    <a href="#" class="nav-item" data-page="chatbot" data-i18n="aiAssistant"><i class="fas fa-robot"></i><span data-i18n="aiAssistant">AI Assistant</span></a>
-                    <a href="#" class="nav-item" data-page="settings" data-i18n="settings"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></a>
+                    <a href="#" class="nav-item" data-page="chatbot" onclick="event.preventDefault(); showPage('chatbot')" data-i18n="aiAssistant"><i class="fas fa-robot"></i><span data-i18n="aiAssistant">AI Assistant</span></a>
+                    <a href="#" class="nav-item" data-page="settings" onclick="event.preventDefault(); showPage('settings')" data-i18n="settings"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></a>
                 </div>
             </nav>
             <div class="sidebar-footer">
