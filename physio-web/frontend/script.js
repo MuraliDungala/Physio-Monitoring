@@ -3076,7 +3076,12 @@ function connectWebSocket() {
         return;
     }
 
-    const wsUrl = `ws://${window.location.hostname}:8000/ws/${currentUser.id}`;
+    // Convert HTTP/HTTPS API URL to WS/WSS
+    const wsProtocol = window.API_BASE_URL.includes('https') ? 'wss' : 'ws';
+    const wsBaseUrl = window.API_BASE_URL.replace('https://', '').replace('http://', '');
+    const wsUrl = `${wsProtocol}://${wsBaseUrl}/ws/${currentUser.id}`;
+    
+    console.log('Connecting WebSocket to:', wsUrl);
     websocket = new WebSocket(wsUrl);
 
     websocket.onopen = function () {
