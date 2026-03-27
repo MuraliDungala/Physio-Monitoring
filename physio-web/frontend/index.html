@@ -73,15 +73,15 @@
                         <div class="notif-dropdown" id="notifDropdown">
                             <div class="notif-header"><span data-i18n="notifications">Notifications</span><button class="btn btn-ghost btn-xs" id="clearAllNotifs">Clear all</button></div>
                             <div class="notif-list" id="notifList">
-                                <div class="notif-item unread" data-action="dashboard">
+                                <div class="notif-item unread" data-action="dashboard" onclick="showPage('dashboard')">
                                     <div class="notif-icon ni-green"><i class="fas fa-chart-line"></i></div>
                                     <div class="notif-body"><p>Your shoulder mobility improved 15% this week!</p><span>2 hours ago</span></div>
                                 </div>
-                                <div class="notif-item unread" data-action="exercises">
+                                <div class="notif-item unread" data-action="exercises" onclick="showPage('exercises')">
                                     <div class="notif-icon ni-blue"><i class="fas fa-dumbbell"></i></div>
                                     <div class="notif-body"><p>New exercise added: Advanced Hip Rotation</p><span>5 hours ago</span></div>
                                 </div>
-                                <div class="notif-item unread" data-action="rehabPlan">
+                                <div class="notif-item unread" data-action="rehabPlan" onclick="showPage('rehabPlan')">
                                     <div class="notif-icon ni-orange"><i class="fas fa-clipboard-list"></i></div>
                                     <div class="notif-body"><p>Week 2 rehab plan is ready for you</p><span>1 day ago</span></div>
                                 </div>
@@ -272,14 +272,14 @@
                         <div class="page-top-right"><button class="btn btn-primary btn-sm" onclick="loadAllExercises()"><i class="fas fa-list"></i> View All</button></div>
                     </div>
                     <div class="exercise-categories">
-                        <div class="category-card" data-category="Neck"><div class="cat-icon ci-neck"><i class="fas fa-head-side-mask"></i></div><div class="cat-info"><h3>Neck</h3><p>Stretches and mobility exercises</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Shoulder"><div class="cat-icon ci-shoulder"><i class="fas fa-hand-rock"></i></div><div class="cat-info"><h3>Shoulder</h3><p>Strengthening and flexibility</p><span class="cat-count">6 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Elbow"><div class="cat-icon ci-elbow"><i class="fas fa-hand-fist"></i></div><div class="cat-info"><h3>Elbow</h3><p>Joint exercises and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Wrist"><div class="cat-icon ci-wrist"><i class="fas fa-hand"></i></div><div class="cat-info"><h3>Wrist</h3><p>Mobility and strengthening</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Hip"><div class="cat-icon ci-hip"><i class="fas fa-person-walking"></i></div><div class="cat-info"><h3>Hip</h3><p>Joint mobility exercises</p><span class="cat-count">4 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Knee"><div class="cat-icon ci-knee"><i class="fas fa-bone"></i></div><div class="cat-info"><h3>Knee</h3><p>Strengthening and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Ankle"><div class="cat-icon ci-ankle"><i class="fas fa-shoe-prints"></i></div><div class="cat-info"><h3>Ankle</h3><p>Stability and mobility</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
-                        <div class="category-card" data-category="Squat"><div class="cat-icon ci-squat"><i class="fas fa-person-arrow-down-to-line"></i></div><div class="cat-info"><h3>Squats</h3><p>Full body strength</p><span class="cat-count">5 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Neck" onclick="loadCategoryExercises('Neck')"><div class="cat-icon ci-neck"><i class="fas fa-head-side-mask"></i></div><div class="cat-info"><h3>Neck</h3><p>Stretches and mobility exercises</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Shoulder" onclick="loadCategoryExercises('Shoulder')"><div class="cat-icon ci-shoulder"><i class="fas fa-hand-rock"></i></div><div class="cat-info"><h3>Shoulder</h3><p>Strengthening and flexibility</p><span class="cat-count">6 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Elbow" onclick="loadCategoryExercises('Elbow')"><div class="cat-icon ci-elbow"><i class="fas fa-hand-fist"></i></div><div class="cat-info"><h3>Elbow</h3><p>Joint exercises and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Wrist" onclick="loadCategoryExercises('Wrist')"><div class="cat-icon ci-wrist"><i class="fas fa-hand"></i></div><div class="cat-info"><h3>Wrist</h3><p>Mobility and strengthening</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Hip" onclick="loadCategoryExercises('Hip')"><div class="cat-icon ci-hip"><i class="fas fa-person-walking"></i></div><div class="cat-info"><h3>Hip</h3><p>Joint mobility exercises</p><span class="cat-count">4 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Knee" onclick="loadCategoryExercises('Knee')"><div class="cat-icon ci-knee"><i class="fas fa-bone"></i></div><div class="cat-info"><h3>Knee</h3><p>Strengthening and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Ankle" onclick="loadCategoryExercises('Ankle')"><div class="cat-icon ci-ankle"><i class="fas fa-shoe-prints"></i></div><div class="cat-info"><h3>Ankle</h3><p>Stability and mobility</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Squat" onclick="loadCategoryExercises('Squat')"><div class="cat-icon ci-squat"><i class="fas fa-person-arrow-down-to-line"></i></div><div class="cat-info"><h3>Squats</h3><p>Full body strength</p><span class="cat-count">5 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                     </div>
                 </div>
 
