@@ -2790,9 +2790,9 @@ function updateExerciseUI(angles, phase) {
     }
 
     // Update detailed form feedback
-    const feedbackElement = document.getElementById('formFeedback');
-    if (feedbackElement && exerciseState.formFeedback.length > 0) {
-        feedbackElement.innerHTML = exerciseState.formFeedback
+    const formFeedbackElement = document.getElementById('formFeedback');
+    if (formFeedbackElement && exerciseState.formFeedback.length > 0) {
+        formFeedbackElement.innerHTML = exerciseState.formFeedback
             .map(feedback => `<div class="feedback-item">${feedback}</div>`)
             .join('');
     }

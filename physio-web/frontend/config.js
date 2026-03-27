@@ -33,5 +33,5 @@ console.log('📡 API Base URL:', window.API_BASE_URL);
 // Log configuration on startup
 console.log('🔧 Frontend Configuration:');
 console.log(`   API Base URL: ${API_BASE_URL}`);
-console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`   Environment: ${window.location.hostname.includes('localhost') ? 'development' : 'production'}`);
 console.log(`   Hostname: ${window.location.hostname}`);
