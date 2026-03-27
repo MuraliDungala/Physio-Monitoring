@@ -523,40 +523,12 @@ async function handleRegister(e) {
             const user = await response.json();
             console.log('✅ Registration successful');
             
-            // Store only the username (never keep password in memory)
-            const registeredUsername = userData.username;
-            
-            // Securely clear credentials from memory
-            userData.password = '';
-            userData = null;
-            
-            // Reset registration form completely
+            // Reset registration form
             document.getElementById('registerForm').reset();
             
-            // Show success then switch to login
+            // Close modal and show success
             closeModal();
-            showNotification('Account created successfully! Please sign in.', 'success');
-            setTimeout(() => {
-                showLoginModal();
-                // Pre-fill ONLY the username (never the password)
-                setTimeout(() => {
-                    // Reset login form first to clear any autofill
-                    const loginForm = document.getElementById('loginForm');
-                    if (loginForm) loginForm.reset();
-                    
-                    const loginUsername = document.getElementById('username');
-                    if (loginUsername) loginUsername.value = registeredUsername;
-                    
-                    // Ensure password field is empty and type=password
-                    const loginPassword = document.getElementById('password');
-                    if (loginPassword) {
-                        loginPassword.value = '';
-                        loginPassword.type = 'password';
-                    }
-                    
-                    showModalAlert('loginAlert', 'Account created! Sign in with your credentials.', 'success');
-                }, 300);
-            }, 500);
+            showNotification('✅ Account created successfully! Please log in.', 'success');
         } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('Registration error response:', response.status, errorData);
