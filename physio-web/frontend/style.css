@@ -1231,15 +1231,11 @@ input, select, textarea { font-family: inherit; }
   padding: 4px 6px 4px 16px;
 }
 .ci-wrap input { flex: 1; border: none; background: none; outline: none; font-size: 14px; padding: 8px 0; color: var(--text); }
-.ci-voice, .ci-send {
+.ci-send {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; transition: var(--transition);
-}
-.ci-voice { color: var(--text-muted); }
-.ci-voice:hover { color: var(--primary); background: var(--primary-bg); }
-.ci-voice.listening { color: #fff; background: var(--red); animation: pulse 1.5s infinite; }
-.ci-send { background: var(--primary); color: #fff; }
+  background: var(--primary); color: #fff; }
 .ci-send:hover { background: var(--primary-dark); }
 
 /* ================================================================
@@ -1646,14 +1642,6 @@ input, select, textarea { font-family: inherit; }
 }
 .fc-input input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,136,229,0.1); }
 .fc-input input::placeholder { color: var(--text-muted); }
-.fc-input-voice {
-  width: 34px; height: 34px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--text-muted); background: none; border: none; cursor: pointer;
-  transition: var(--transition);
-}
-.fc-input-voice:hover { color: var(--primary); background: var(--primary-bg); }
-.fc-input-voice.listening { color: #fff; background: var(--red); animation: pulse 1.5s infinite; }
 .fc-input button.fc-send-btn {
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--primary); color: #fff; font-size: 13px;
@@ -1777,9 +1765,6 @@ input, select, textarea { font-family: inherit; }
 .dashboard-controls { display: flex; gap: 8px; align-items: center; }
 .category-header { margin-bottom: 16px; }
 
-/* Voice feedback compatibility */
-.voice-value { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
-
 /* Notification compat */
 .notification { padding: 12px 20px; border-radius: var(--radius); margin-bottom: 8px; font-size: 14px; background: var(--bg-card); box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
 .notification.success { border-left: 4px solid var(--green); }
@@ -1880,9 +1865,6 @@ input, select, textarea { font-family: inherit; }
 .notif-body p { font-size: 13px; color: var(--text); line-height: 1.4; }
 .notif-body span { font-size: 11px; color: var(--text-muted); margin-top: 2px; display: block; }
 .notif-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
-
-.topbar-icon-btn.voice-active { background: var(--primary-bg); color: var(--primary); }
-.topbar-icon-btn.voice-active i { color: var(--primary); }
 
 /* Search results dropdown */
 .search-results {

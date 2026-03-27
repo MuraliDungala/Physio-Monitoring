@@ -167,7 +167,6 @@
                             <div class="feature-card"><div class="feature-icon fi-blue"><i class="fas fa-video"></i></div><h3>Real-Time Camera Tracking</h3><p>MediaPipe-powered pose detection tracks 33 body landmarks with sub-pixel accuracy</p></div>
                             <div class="feature-card"><div class="feature-icon fi-teal"><i class="fas fa-chart-bar"></i></div><h3>Progress Dashboard</h3><p>Visual analytics showing session trends, quality scores, and recovery milestones</p></div>
                             <div class="feature-card"><div class="feature-icon fi-purple"><i class="fas fa-brain"></i></div><h3>AI Recommendations</h3><p>Intelligent exercise suggestions based on performance history and recovery goals</p></div>
-                            <div class="feature-card"><div class="feature-icon fi-green"><i class="fas fa-volume-up"></i></div><h3>Voice Guidance</h3><p>Audio cues for form correction, rep counting, and motivational feedback</p></div>
                         </div>
                     </section>
 
@@ -339,7 +338,7 @@
                             <div class="metric-card mc-blue"><div class="mc-icon"><i class="fas fa-eye"></i></div><div class="mc-body"><span class="mc-label">Pose Detection</span><span class="mc-val mc-sm" id="landmarksStatus">Not Detected</span></div></div>
                             <div class="posture-card"><h4><i class="fas fa-user-check"></i> Posture</h4><div id="postureFeedback" class="posture-status"><span class="posture-badge good">Correct</span></div></div>
                             <div class="fatigue-card" id="fatigueWarning" style="display:none;"><i class="fas fa-exclamation-triangle"></i><span>Fatigue Detected</span></div>
-                            <div class="ai-msg-card"><h4><i class="fas fa-lightbulb"></i> Exercise Feedback</h4><p id="voiceMessage">Begin your exercise to receive feedback.</p></div>
+                            <div class="ai-msg-card"><h4><i class="fas fa-lightbulb"></i> Exercise Feedback</h4><p id="feedbackMessage">Begin your exercise to receive feedback.</p></div>
                             <div class="cur-exercise-card"><span class="ce-label">Current Exercise</span><span class="ce-name" id="currentExercise">-</span></div>
                         </div>
                     </div>
@@ -463,7 +462,6 @@
                         <div class="chatbot-input">
                             <div class="ci-wrap">
                                 <input type="text" id="chatInput" placeholder="Ask anything about physiotherapy..." autocomplete="off">
-                                <button class="ci-voice" id="chatVoiceBtn" onclick="toggleChatVoiceInput()" title="Voice Input"><i class="fas fa-microphone"></i></button>
                                 <button id="sendBtn" class="ci-send"><i class="fas fa-paper-plane"></i></button>
                             </div>
                         </div>
@@ -682,45 +680,6 @@
                                         <button class="stg-diff-btn" data-diff="intermediate"><i class="fas fa-running"></i><span>Intermediate</span><small>Moderate pace &amp; load</small></button>
                                         <button class="stg-diff-btn" data-diff="advanced"><i class="fas fa-fire"></i><span>Advanced</span><small>High intensity focus</small></button>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- ─── VOICE GUIDANCE ─── -->
-                            <div class="stg-panel" id="stgPanel-voice">
-                                <div class="stg-panel-header">
-                                    <div class="stg-panel-icon stg-icon-green"><i class="fas fa-volume-up"></i></div>
-                                    <div>
-                                        <h2>Voice Guidance Settings</h2>
-                                        <p>Control audio feedback during your sessions</p>
-                                    </div>
-                                </div>
-
-                                <div class="stg-card">
-                                    <h3>Voice Feedback</h3>
-                                    <div class="stg-toggle-list">
-                                        <div class="stg-toggle-item">
-                                            <div class="stg-toggle-info">
-                                                <div class="stg-toggle-label">Enable Voice Feedback</div>
-                                                <div class="stg-toggle-desc">Hear spoken cues and corrections while exercising</div>
-                                            </div>
-                                            <label class="toggle"><input type="checkbox" id="voiceEnabled"><span class="toggle-slider"></span></label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="stg-card">
-                                    <h3>Voice Controls</h3>
-                                    <div class="stg-slider-group">
-                                        <label class="stg-slider-label"><i class="fas fa-tachometer-alt"></i> Voice Speed <span class="stg-slider-val" id="voiceSpeedVal">0.9×</span></label>
-                                        <input type="range" class="stg-range" min="0.5" max="2" step="0.1" value="0.9" id="voiceSpeed">
-                                        <div class="stg-range-labels"><span>Slow</span><span>Normal</span><span>Fast</span></div>
-                                    </div>
-                                    <div class="stg-slider-group">
-                                        <label class="stg-slider-label"><i class="fas fa-volume-down"></i> Volume <span class="stg-slider-val" id="voiceVolumeVal">80%</span></label>
-                                        <input type="range" class="stg-range" min="0" max="1" step="0.05" value="0.8" id="voiceVolume">
-                                        <div class="stg-range-labels"><span>Mute</span><span>Medium</span><span>Max</span></div>
-                                    </div>
-                                    <button class="btn btn-ghost btn-sm" onclick="testVoiceSettings()" style="margin-top:8px;"><i class="fas fa-play-circle"></i> Test Voice</button>
                                 </div>
                             </div>
 
@@ -1133,7 +1092,6 @@
     <!-- New Module Scripts (in dependency order) -->
     <script src="i18n.js?v=1"></script>
     <script src="loading-manager.js?v=1"></script>
-    <script src="voice-assistant-system.js?v=1"></script>
     <script src="physio-chatbot.js?v=1"></script>
     <script src="injury-predictor.js?v=1"></script>
     <script src="therapist-dashboard.js?v=1"></script>
@@ -1141,9 +1099,7 @@
     <!-- Integration Module (must run after all modules) -->
     <script src="integration.js?v=1"></script>
     
-    <!-- Existing Enhancement Scripts -->
-    <script src="voice-assistant.js?v=3"></script>
-    <script src="voice-control.js?v=1"></script>
+    <!-- UI Enhancement Scripts -->
     <script src="ui-enhancements.js?v=6"></script>
 </body>
 </html>

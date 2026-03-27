@@ -3,12 +3,27 @@
  * Manages voice settings and controls in the UI
  */
 
+// Helper function to get the correct API base URL
+// This uses the API_BASE defined in script.js if available, or getAPIBaseURL()
+function getVoiceAPIBase() {
+    // Try to use the global API_BASE from script.js first
+    if (typeof API_BASE !== 'undefined' && API_BASE) {
+        return API_BASE;
+    }
+    // Fall back to getAPIBaseURL() if defined
+    if (typeof getAPIBaseURL === 'function') {
+        return getAPIBaseURL();
+    }
+    // Last resort fallback
+    return typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 'http://localhost:8000';
+}
+
 class VoiceController {
     constructor() {
         this.enabled = true;
         this.speed = 150;
         this.volume = 0.8;
-        this.baseUrl = '';
+        this.baseUrl = getVoiceAPIBase();  // Get API base URL
         this.statusElement = null;
         this.initPromise = this.init();
     }
@@ -16,7 +31,7 @@ class VoiceController {
     async init() {
         try {
             // Get current voice status from server
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/status`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/status`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -39,7 +54,7 @@ class VoiceController {
 
     async toggleVoice() {
         try {
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/toggle`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/toggle`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -62,7 +77,7 @@ class VoiceController {
 
     async enableVoice() {
         try {
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/enable`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/enable`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -82,7 +97,7 @@ class VoiceController {
 
     async disableVoice() {
         try {
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/disable`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/disable`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -107,7 +122,7 @@ class VoiceController {
         }
 
         try {
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/speed?speed=${speed}`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/speed?speed=${speed}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -132,7 +147,7 @@ class VoiceController {
         }
 
         try {
-            const response = await fetch(`${window.API_BASE || 'http://localhost:8001'}/voice/volume?volume=${volume}`, {
+            const response = await fetch(`${getVoiceAPIBase()}/voice/volume?volume=${volume}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -306,15 +321,38 @@ class VoiceController {
 // Initialize global voice controller
 const voiceController = new VoiceController();
 
-// Auto-insert UI when DOM is ready
+// FIXED: Remove global auto-insertion - only show on Exercise and Settings pages
+// Previously this was injecting the voice panel on EVERY page
+// Now it's called explicitly from showpage() when navigating to exercises or settings
+
+// Initialize voice controller when DOM is ready (but don't inject UI yet)
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         voiceController.initPromise.then(() => {
-            voiceController.insertControlPanel();
+            console.log('✅ Voice Controller initialized (UI hidden until exercise/settings page)');
         });
     });
 } else {
     voiceController.initPromise.then(() => {
-        voiceController.insertControlPanel();
+        console.log('✅ Voice Controller initialized (UI hidden until exercise/settings page)');
     });
+}
+
+/**
+ * Show voice control panel (call from showPage('exercises') or showPage('settings'))
+ */
+function showVoiceControlPanel() {
+    voiceController.insertControlPanel();
+    const panel = document.getElementById('voice-control-panel');
+    if (panel) panel.style.display = 'block';
+}
+
+/**
+ * Hide voice control panel (call when leaving exercises/settings)
+ */
+function hideVoiceControlPanel() {
+    const panel = document.getElementById('voice-control-panel');
+    const btn = document.getElementById('voice-control-floating-btn');
+    if (panel) panel.style.display = 'none';
+    if (btn) btn.style.display = 'none';
 }

@@ -66,8 +66,47 @@ let voiceAssistant = {
     synth: window.speechSynthesis || null
 };
 
-// API Configuration - Points to backend (can be configured via environment)
-const API_BASE = window.API_BASE_URL || `http://${window.location.hostname}:8000`;
+// API Configuration - IMPORTANT: Update this for production deployment
+// For development (localhost): Auto-detects backend on port 8000
+// For production (Vercel/deployed): Set window.API_BASE_URL BEFORE this script loads
+// 
+// PRODUCTION SETUP:
+// 1. Deploy backend to Render/Railway (get URL like: https://your-backend.onrender.com)
+// 2. Add to index.html BEFORE script.js loads:
+//    <script>
+//      window.API_BASE_URL = 'https://your-backend.onrender.com';
+//    </script>
+// 3. Or set via environment variable in deployment platform
+
+function getAPIBaseURL() {
+    // If explicitly set in environment/config
+    if (typeof window.API_BASE_URL !== 'undefined' && window.API_BASE_URL) {
+        console.log('🔗 Using configured API_BASE_URL:', window.API_BASE_URL);
+        return window.API_BASE_URL;
+    }
+    
+    // Auto-detect based on current location
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // If running on localhost, use localhost:8000
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        const url = `${protocol}//localhost:8000`;
+        console.log('🔗 Development mode - using local backend:', url);
+        return url;
+    }
+    
+    // If deployed on Vercel or other platform, must have explicit config
+    // Default to same domain (user should configure environment)
+    console.warn('⚠️ Production environment detected but API_BASE_URL not configured!');
+    console.warn('⚠️ Please set window.API_BASE_URL in environment or config before loading this script');
+    console.log('Attempted hostname:', hostname);
+    
+    // Fallback to same domain (may not work without proper backend)
+    return `${protocol}//${hostname}`;
+}
+
+const API_BASE = getAPIBaseURL();
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {
@@ -79,13 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
     setupEventListeners();
     checkAuthStatus();
-    
-    // Initialize voice assistant (if available)
-    if (typeof initializeVoiceAssistant === 'function') {
-        initializeVoiceAssistant();
-    } else {
-        console.warn('⚠️ Voice assistant module not loaded');
-    }
 });
 
 function initializeApp() {
@@ -2751,10 +2783,10 @@ function updateExerciseUI(angles, phase) {
         postureElement.className = 'posture-value needs-improvement';
     }
 
-    // Update voice feedback
-    const voiceElement = document.getElementById('voiceMessage');
-    if (voiceElement && exerciseState.formFeedback.length > 0) {
-        voiceElement.textContent = exerciseState.formFeedback[0];
+    // Update feedback message
+    const feedbackElement = document.getElementById('feedbackMessage');
+    if (feedbackElement && exerciseState.formFeedback.length > 0) {
+        feedbackElement.textContent = exerciseState.formFeedback[0];
     }
 
     // Update detailed form feedback
@@ -3142,10 +3174,10 @@ function updateExerciseFeedback(data) {
         landmarksElement.className = data.landmarks_detected ? 'landmarks-detected' : 'landmarks-not-detected';
     }
 
-    // Update voice feedback
+    // Update feedback message
     if (data.voice_message) {
-        const voiceElement = document.getElementById('voiceMessage');
-        voiceElement.textContent = data.voice_message;
+        const feedbackElement = document.getElementById('feedbackMessage');
+        feedbackElement.textContent = data.voice_message;
 
         // Add animation
         const voiceContainer = document.getElementById('voiceFeedback');
@@ -3231,7 +3263,7 @@ function resetExerciseData() {
     document.getElementById('qualityScore').textContent = '0%';
     document.getElementById('postureFeedback').textContent = 'Correct';
     document.getElementById('postureFeedback').className = 'posture-value';
-    document.getElementById('voiceMessage').textContent = 'Voice guidance will appear here';
+    document.getElementById('feedbackMessage').textContent = 'Feedback will appear here';
 }
 
 async function exitExercise() {
@@ -4830,7 +4862,6 @@ async function sendChatMessage() {
         if (response.ok) {
             const data = await response.json();
             addChatMessage(data.response, 'bot');
-            speakChatResponse(data.response);
         } else {
             addChatMessage('Sorry, I encountered an error. Please try again.', 'bot');
         }
@@ -4965,60 +4996,6 @@ function clearChatHistory() {
 // ================================================================
 //   VOICE INPUT FOR CHATBOT
 // ================================================================
-let chatVoiceRecognition = null;
-
-function toggleChatVoiceInput() {
-    const btn = document.getElementById('chatVoiceBtn');
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        addChatMessage('Voice input is not supported in this browser. Please use Chrome or Edge.', 'bot');
-        return;
-    }
-    if (chatVoiceRecognition) {
-        chatVoiceRecognition.stop();
-        chatVoiceRecognition = null;
-        if (btn) btn.classList.remove('listening');
-        return;
-    }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    chatVoiceRecognition = new SR();
-    chatVoiceRecognition.lang = 'en-US';
-    chatVoiceRecognition.continuous = false;
-    chatVoiceRecognition.interimResults = false;
-    if (btn) btn.classList.add('listening');
-
-    chatVoiceRecognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        const input = document.getElementById('chatInput');
-        if (input) input.value = transcript;
-        sendChatMessage();
-    };
-    chatVoiceRecognition.onend = () => {
-        chatVoiceRecognition = null;
-        if (btn) btn.classList.remove('listening');
-    };
-    chatVoiceRecognition.onerror = () => {
-        chatVoiceRecognition = null;
-        if (btn) btn.classList.remove('listening');
-    };
-    chatVoiceRecognition.start();
-}
-
-/**
- * Optionally speak bot responses using Speech Synthesis.
- */
-function speakChatResponse(text) {
-    if (!window.speechSynthesis) return;
-    // Only speak if voice is enabled in settings
-    const voiceEnabled = document.getElementById('voiceEnabled');
-    if (voiceEnabled && !voiceEnabled.checked) return;
-    // Strip markdown
-    const plain = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/[•\-]\s+/g, '').replace(/\n/g, '. ');
-    const utterance = new SpeechSynthesisUtterance(plain);
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    speechSynthesis.speak(utterance);
-}
-
 // Notifications
 function showNotification(message, type = 'info') {
     // Create notification element
@@ -5393,16 +5370,6 @@ document.head.appendChild(style);
         } catch (e) {
             if (typeof showToast === 'function') showToast('Network error', 'error');
         }
-    };
-
-    /* ── Public: Voice Test ── */
-    window.testVoiceSettings = function () {
-        if (!('speechSynthesis' in window)) { if (typeof showToast === 'function') showToast('Speech not supported in this browser', 'error'); return; }
-        const u = new SpeechSynthesisUtterance('Hello! Your voice settings are working. Keep up the great work with your physiotherapy exercises.');
-        u.rate = parseFloat(document.getElementById('voiceSpeed')?.value || 0.9);
-        u.volume = parseFloat(document.getElementById('voiceVolume')?.value || 0.8);
-        speechSynthesis.cancel();
-        speechSynthesis.speak(u);
     };
 
     /* ── Public: Camera List ── */
