@@ -16,81 +16,8 @@ from .prediction_smoother import PredictionSmoother
 logger = logging.getLogger(__name__)
 
 
-class ExerciseVoiceIntegration:
-    """
-    Integrates voice feedback with exercise tracking
-    
-    Handles:
-    - Exercise-specific voice guidance
-    - Rep counting announcements
-    - Posture correction feedback
-    - Fatigue detection alerts
-    - Form quality feedback
-    """
-    
-    # Exercise-specific starting instructions
-    EXERCISE_INSTRUCTIONS = {
-        "Shoulder Flexion": "Raise your arm forward and up. Keep your back straight.",
-        "Shoulder Extension": "Move your arm backward. Maintain control.",
-        "Shoulder Abduction": "Raise your arm sideways. Keep it smooth.",
-        "Shoulder Adduction": "Lower your arm to your body. Controlled movement.",
-        "Shoulder Internal Rotation": "Rotate your arm inward. Slow and steady.",
-        "Shoulder External Rotation": "Rotate your arm outward. Maintain your posture.",
-        "Elbow Flexion": "Bend your elbow toward your shoulder. Keep your arm stable.",
-        "Elbow Extension": "Straighten your arm. No locking at the elbow.",
-        "Knee Flexion": "Bend your knee toward your body. Move slowly.",
-        "Knee Extension": "Straighten your leg. Controlled movement.",
-        "Hip Abduction": "Move your leg outward. Keep your torso steady.",
-        "Hip Flexion": "Raise your leg upward. No back arching.",
-        "Hip Extension": "Move your leg backward. Engage your core.",
-        "Ankle Dorsiflexion": "Point your toes upward. Feel the stretch.",
-        "Ankle Plantarflexion": "Point your toes downward. Slow movement.",
-        "Ankle Inversion": "Turn your sole inward. Small controlled movements.",
-        "Ankle Eversion": "Turn your sole outward. Maintain balance.",
-        "Body Weight Squat": "Bend your knees and lower your body. Back straight.",
-        "Wall Sit": "Lower your back against the wall. Strong stance.",
-        "Sumo Squat": "Wide stance, bend your knees. Keep chest up.",
-        "Partial Squat": "Slightly bend your knees. Controlled movement.",
-        "Calf Raises": "Rise up on your toes. Balance is important.",
-        "Wrist Flexion": "Bend your wrist downward. Slow and steady.",
-        "Wrist Extension": "Bend your wrist upward. Maintain control.",
-        "Back Extension": "Arch your back carefully. Engage your core.",
-    POSTURE_CORRECTIONS = {
-        "keep_back_straight": "Keep your back straight. Shoulders back.",
-        "keep_elbow_bent": "Keep your elbow bent. Maintain the position.",
-        "slower_movement": "Slow down. More controlled movements please.",
-        "fuller_range": "Increase your range of motion. Go a bit further.",
-        "maintain_position": "Hold this position steady. Engage your core.",
-        "level_shoulders": "Keep your shoulders level. No shrugging.",
-        "core_engaged": "Engage your core. Tighten your abs.",
-        "head_straight": "Keep your head in neutral position.",
-        "no_jerking": "Smooth movements. Avoid jerky motions.",
-        "control_descent": "Control the downward movement. Don't drop suddenly.",
-        "stabilize": "Stabilize your body. Use your core.",
-    }
-    
-    # Form quality feedback
-    FORM_FEEDBACK = {
-        "excellent": [
-            "Excellent form!",
-            "Perfect form! Keep it up!",
-            "Outstanding form! Well done!",
-            "Great form! Continue like this!",
-        ],
-        "good": [
-            "Good form. Keep going.",
-            "Nice form. Well done.",
-            "Good movement. Continue.",
-            "You're doing well.",
-        ],
-        "poor": [
-            "Check your form. Pay attention to your posture.",
-            "Adjust your form. Focus more carefully.",
-            "Watch your form. Try to improve.",
-            "Check your alignment. Be more careful.",
-        ],
-    }
-    
+
+
 class ExerciseVoiceIntegration:
     """
     Event-Driven Voice Feedback Integration.
