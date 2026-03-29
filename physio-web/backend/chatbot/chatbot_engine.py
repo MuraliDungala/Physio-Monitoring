@@ -87,31 +87,6 @@ class PhysioChatbot:
                 "4. Lower slowly\n"
                 "Target: 12-15 repetitions"
             ),
-            "neck flexion": (
-                "Neck Flexion Instructions:\n"
-                "1. Sit with good posture\n"
-                "2. Tuck chin to chest\n"
-                "3. Hold for 2 seconds\n"
-                "4. Return slowly\n"
-                "Target: 10 repetitions"
-            ),
-            "neck extension": (
-                "Neck Extension Instructions:\n"
-                "1. Sit with good posture\n"
-                "2. Look upward gently\n"
-                "3. Hold for 2 seconds\n"
-                "4. Return slowly\n"
-                "Target: 10 repetitions"
-            ),
-            "neck rotation": (
-                "Neck Rotation Instructions:\n"
-                "1. Sit with good posture\n"
-                "2. Turn head to right\n"
-                "3. Hold for 2 seconds\n"
-                "4. Turn to left\n"
-                "5. Hold for 2 seconds\n"
-                "Target: 8-10 repetitions"
-            ),
             "wrist flexion": (
                 "Wrist Flexion Instructions:\n"
                 "1. Hold arm straight\n"

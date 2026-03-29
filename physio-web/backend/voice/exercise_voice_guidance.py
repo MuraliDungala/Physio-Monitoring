@@ -167,9 +167,6 @@ class ExerciseVoiceGuidance:
         "Squat Hold": "Starting squat hold. Maintain a squat position.",
         "Wrist Flexion": "Starting wrist flexion. Bend your wrist downward.",
         "Wrist Extension": "Starting wrist extension. Bend your wrist upward.",
-        "Neck Flexion": "Starting neck flexion. Bend your neck forward.",
-        "Neck Extension": "Starting neck extension. Bend your neck backward.",
-        "Neck Rotation": "Starting neck rotation. Turn your head side to side.",
         "Back Extension": "Starting back extension. Arch your back carefully.",
     }
     

@@ -38,7 +38,7 @@ class PhysioMLTrainer:
             'Shoulder Flexion', 'Shoulder Extension', 'Shoulder Abduction', 
             'Shoulder Adduction', 'Shoulder Internal Rotation', 'Shoulder External Rotation',
             'Elbow Flexion', 'Elbow Extension', 'Knee Flexion', 'Hip Abduction',
-            'Neck Rotation', 'Wrist Flexion', 'Wrist Extension', 'Ankle Dorsiflexion',
+            'Wrist Flexion', 'Wrist Extension', 'Ankle Dorsiflexion',
             'Squat', 'Lunge', 'Plank'
         ]
         
@@ -119,7 +119,7 @@ class PhysioMLTrainer:
         # UI-PMRD focuses on rehabilitation exercises
         ui_pmrd_exercises = [
             'Shoulder Flexion', 'Shoulder Abduction', 'Elbow Flexion', 
-            'Wrist Flexion', 'Wrist Extension', 'Neck Rotation'
+            'Wrist Flexion', 'Wrist Extension'
         ]
         
         for i in range(n_samples):
@@ -132,9 +132,6 @@ class PhysioMLTrainer:
                 # Wrist exercises have specific hand landmark patterns
                 X[i, 20*4:21*4] = np.random.normal(0.2, 0.05, 4)  # Right wrist
                 X[i, 19*4:20*4] = np.random.normal(0.1, 0.05, 4)  # Right index finger
-            elif 'Neck' in exercise_name:
-                # Neck rotation affects head landmarks
-                X[i, 0*4:2*4] = np.random.normal(0.1, 0.03, 8)  # Nose and eyes
             elif 'Shoulder' in exercise_name:
                 # Shoulder rehabilitation patterns (smaller range of motion)
                 X[i, 12*4:13*4] = np.random.normal(0.15, 0.05, 4)  # Right shoulder

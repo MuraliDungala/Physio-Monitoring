@@ -54,13 +54,7 @@ class ExerciseVoiceIntegration:
         "Calf Raises": "Rise up on your toes. Balance is important.",
         "Wrist Flexion": "Bend your wrist downward. Slow and steady.",
         "Wrist Extension": "Bend your wrist upward. Maintain control.",
-        "Neck Flexion": "Bend your neck forward. Don't force the movement.",
-        "Neck Extension": "Bend your neck backward. Take it easy.",
-        "Neck Rotation": "Turn your head side to side. Smooth motion.",
         "Back Extension": "Arch your back carefully. Engage your core.",
-    }
-    
-    # Posture correction messages
     POSTURE_CORRECTIONS = {
         "keep_back_straight": "Keep your back straight. Shoulders back.",
         "keep_elbow_bent": "Keep your elbow bent. Maintain the position.",
@@ -138,9 +132,6 @@ class ExerciseVoiceIntegration:
         "Calf Raises": "Rise up on your toes. Balance is important.",
         "Wrist Flexion": "Bend your wrist downward. Slow and steady.",
         "Wrist Extension": "Bend your wrist upward. Maintain control.",
-        "Neck Flexion": "Bend your neck forward. Don't force the movement.",
-        "Neck Extension": "Bend your neck backward. Take it easy.",
-        "Neck Rotation": "Turn your head side to side. Smooth motion.",
         "Back Extension": "Arch your back carefully. Engage your core.",
     }
     

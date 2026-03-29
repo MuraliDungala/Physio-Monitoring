@@ -82,7 +82,6 @@ def verify_exercise_configuration():
         "Squat": ["Body Weight Squat", "Wall Sit", "Sumo Squat", "Partial Squat", "Squat Hold"],
         "Ankle": ["Ankle Dorsiflexion", "Ankle Plantarflexion", "Ankle Inversion", "Ankle Eversion", "Ankle Circles"],
         "Wrist": ["Wrist Flexion", "Wrist Extension"],
-        "Neck": ["Neck Flexion", "Neck Extension", "Neck Rotation"],
         "Back": ["Back Extension"],
     }
     

@@ -133,7 +133,7 @@ class ConnectionManager:
         
         # 8 main exercise categories
         self.EXERCISE_CATEGORIES = [
-            "Neck", "Shoulder", "Elbow", "Wrist", 
+            "Shoulder", "Elbow", "Wrist", 
             "Hip", "Knee", "Ankle", "Squat"
         ]
     
@@ -230,20 +230,6 @@ async def init_default_exercises():
         
         # Add missing exercises
         missing_exercises = []
-        
-        # Neck exercises
-        if "Neck Flexion" not in existing_names:
-            missing_exercises.append(Exercise(name="Neck Flexion", category="Neck",
-                    description="Tuck chin to chest",
-                    instructions="Sit tall, gently tuck chin to chest, hold briefly"))
-        if "Neck Extension" not in existing_names:
-            missing_exercises.append(Exercise(name="Neck Extension", category="Neck",
-                    description="Look upward gently",
-                    instructions="Sit tall, look upward gently, hold briefly"))
-        if "Neck Rotation" not in existing_names:
-            missing_exercises.append(Exercise(name="Neck Rotation", category="Neck",
-                    description="Turn head side to side",
-                    instructions="Sit tall, turn head to right, then left, gently"))
         
         # Shoulder exercises
         if "Shoulder Flexion" not in existing_names:
@@ -1017,6 +1003,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
     await manager.connect(websocket, user_id)
     # Instantiate per-connection engine
     current_engine = ExerciseEngine()
+    # Track when session started for duration calculation
+    session_start_time = datetime.now()
     
     try:
         while True:
@@ -1037,12 +1025,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             elif message.get("type") == "select_exercise":
                 # Select single exercise for tracking
                 exercise_name = message.get("exercise_name")
-                category = message.get("category")
+                category = message.get("category", "Shoulder")  # Default to Shoulder for exercise tracking
                 if category in manager.EXERCISE_CATEGORIES:
                     state = manager.get_user_state(user_id, category)
                     state["current_exercise"] = exercise_name
                     state["started"] = True
-                logger.info(f"User {user_id} selected exercise: {exercise_name}")
+                    # Initialize session start if this is first exercise of session
+                    if not state.get("session_started"):
+                        state["session_started"] = datetime.now().isoformat()
+                logger.info(f"User {user_id} selected exercise: {exercise_name} in category: {category}")
             
             elif message.get("type") == "reset":
                 # Reset single exercise tracking
@@ -1061,27 +1052,49 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                 
     except WebSocketDisconnect:
         # Save exercise sessions before disconnecting
+        session_end_time = datetime.now()
         try:
+            db = next(get_db())
+            sessions_saved = 0
+            
+            # Iterate through all categories and save exercises with reps > 0
             for category in manager.EXERCISE_CATEGORIES:
                 state = manager.get_user_state(user_id, category)
                 if state.get("exercises"):
-                    db = next(get_db())
                     for exercise_name, exercise_data in state["exercises"].items():
                         if exercise_data.get("reps", 0) > 0:
+                            # Calculate session duration
+                            session_start = exercise_data.get("session_start")
+                            if session_start:
+                                try:
+                                    start_dt = datetime.fromisoformat(session_start)
+                                    duration = int((session_end_time - start_dt).total_seconds())
+                                except:
+                                    duration = int((session_end_time - session_start_time).total_seconds())
+                            else:
+                                duration = int((session_end_time - session_start_time).total_seconds())
+                            
                             session = ExerciseSession(
                                 user_id=int(user_id),
                                 exercise_name=exercise_name,
                                 total_reps=exercise_data.get("reps", 0),
                                 average_joint_angle=exercise_data.get("last_angle", 0),
                                 quality_score=exercise_data.get("quality_score", 0.0),
-                                duration_seconds=0,
+                                duration_seconds=max(0, duration),  # Ensure non-negative
                                 posture_correctness=100.0
                             )
                             db.add(session)
-                    db.commit()
-                    db.close()
+                            sessions_saved += 1
+                            logger.info(f"✅ Saved {exercise_name}: {exercise_data.get('reps', 0)} reps, "
+                                      f"quality={exercise_data.get('quality_score', 0):.0f}, "
+                                      f"duration={duration}s")
+            
+            if sessions_saved > 0:
+                db.commit()
+                logger.info(f"💾 Successfully saved {sessions_saved} exercise sessions for user {user_id}")
+            db.close()
         except Exception as e:
-            logger.error(f"Error saving exercise sessions: {e}")
+            logger.error(f"❌ Error saving exercise sessions: {e}")
         
         manager.disconnect(user_id)
         current_engine.cleanup()
@@ -1163,6 +1176,7 @@ async def process_frame(message: dict, user_id: str, engine: ExerciseEngine):
     """Process a single frame for exercise monitoring"""
     try:
         exercise_name = message.get("exercise_name")
+        category = message.get("category", "Shoulder")  # Default to Shoulder to track these exercises
         
         # Offload to thread
         feedback = await asyncio.to_thread(
@@ -1175,6 +1189,29 @@ async def process_frame(message: dict, user_id: str, engine: ExerciseEngine):
         
         if not feedback:
             return
+        
+        # CRITICAL FIX: Store exercise data in manager state for persistence
+        # This ensures reps/angles are saved when websocket disconnects
+        if feedback.get("landmarks_detected") and exercise_name:
+            state = manager.get_user_state(user_id, category)
+            
+            # Initialize exercise tracking if not exists
+            if exercise_name not in state["exercises"]:
+                state["exercises"][exercise_name] = {
+                    "reps": 0,
+                    "last_angle": 0,
+                    "quality_score": 0,
+                    "session_start": datetime.now().isoformat()
+                }
+            
+            # Update exercise data with current frame results
+            exercise_data = state["exercises"][exercise_name]
+            exercise_data["reps"] = max(exercise_data["reps"], feedback.get("reps", 0))
+            exercise_data["last_angle"] = feedback.get("angle", 0)
+            exercise_data["quality_score"] = max(exercise_data["quality_score"], feedback.get("quality_score", 0))
+            
+            logger.debug(f"Updated exercise state for {exercise_name}: reps={exercise_data['reps']}, "
+                        f"angle={exercise_data['last_angle']}, quality={exercise_data['quality_score']}")
         
         # Send feedback to user
         await manager.send_personal_message(feedback, user_id)
@@ -1419,32 +1456,6 @@ REHAB_EXERCISE_LIBRARY = {
         {"name": "Leg Swings", "description": "Hold a wall, swing one leg forward and backward", "sets": 2, "reps": 12, "hold_seconds": None, "rest_seconds": 15, "notes": "Dynamic warm-up exercise"},
     ],
 
-    # ─── NECK ───
-    ("Neck", "Pain Reduction"): [
-        {"name": "Neck Flexion Stretch", "description": "Gently tilt chin toward chest, hold", "sets": 3, "reps": 8, "hold_seconds": 15, "rest_seconds": 20, "notes": "No bouncing — slow and steady"},
-        {"name": "Neck Extension Stretch", "description": "Gently tilt head backward and look at ceiling", "sets": 3, "reps": 8, "hold_seconds": 10, "rest_seconds": 20, "notes": "Stop if dizzy"},
-        {"name": "Upper Trap Stretch", "description": "Tilt ear to shoulder, gently press with hand for stretch", "sets": 3, "reps": 8, "hold_seconds": 15, "rest_seconds": 20, "notes": "Keep opposite shoulder down"},
-        {"name": "Chin Tucks", "description": "Pull chin straight back creating a 'double chin', hold", "sets": 3, "reps": 12, "hold_seconds": 5, "rest_seconds": 15, "notes": "Corrects forward head posture"},
-    ],
-    ("Neck", "Increase ROM"): [
-        {"name": "Neck Rotation", "description": "Slowly turn head to look over each shoulder", "sets": 3, "reps": 10, "hold_seconds": 5, "rest_seconds": 20, "notes": "Move within pain-free range"},
-        {"name": "Neck Lateral Flexion", "description": "Tilt ear toward shoulder on each side", "sets": 3, "reps": 10, "hold_seconds": 5, "rest_seconds": 20, "notes": "Keep shoulders level"},
-        {"name": "Neck Flexion/Extension", "description": "Nod head forward then tilt backward through full range", "sets": 3, "reps": 10, "hold_seconds": 3, "rest_seconds": 20, "notes": "Smooth, continuous movement"},
-        {"name": "Neck Circles", "description": "Roll head in a gentle half-circle (ear to ear via chin)", "sets": 2, "reps": 8, "hold_seconds": None, "rest_seconds": 20, "notes": "Avoid full circles backward"},
-    ],
-    ("Neck", "Strength Building"): [
-        {"name": "Isometric Neck Flexion", "description": "Push forehead into palm, resist with the hand — no movement", "sets": 3, "reps": 8, "hold_seconds": 8, "rest_seconds": 30, "notes": "Build effort gradually"},
-        {"name": "Isometric Neck Extension", "description": "Push back of head into clasped hands, resist — no movement", "sets": 3, "reps": 8, "hold_seconds": 8, "rest_seconds": 30, "notes": "Keep neck neutral"},
-        {"name": "Isometric Lateral Resist", "description": "Push side of head into palm, resist — no movement", "sets": 3, "reps": 8, "hold_seconds": 8, "rest_seconds": 30, "notes": "Both sides"},
-        {"name": "Scapular Retraction", "description": "Squeeze shoulder blades together and hold", "sets": 3, "reps": 12, "hold_seconds": 5, "rest_seconds": 30, "notes": "Supports neck posture"},
-    ],
-    ("Neck", "Daily Mobility"): [
-        {"name": "Clock Neck Stretches", "description": "Tilt head to 12, 3, 6, and 9 o'clock positions", "sets": 2, "reps": 5, "hold_seconds": 5, "rest_seconds": 15, "notes": "Great for hourly desk breaks"},
-        {"name": "Seated Chin Tucks", "description": "Pull chin back while seated at desk", "sets": 2, "reps": 10, "hold_seconds": 5, "rest_seconds": 10, "notes": "Can do anytime while working"},
-        {"name": "Shoulder Blade Squeeze", "description": "Pull shoulders back and squeeze blade together", "sets": 2, "reps": 10, "hold_seconds": 5, "rest_seconds": 15, "notes": "Counteracts forward posture"},
-        {"name": "Head Glides", "description": "Slide head forward and backward keeping chin level", "sets": 2, "reps": 10, "hold_seconds": None, "rest_seconds": 15, "notes": "Improves cervical posture awareness"},
-    ],
-
     # ─── WRIST ───
     ("Wrist", "Pain Reduction"): [
         {"name": "Wrist Flexor Stretch", "description": "Extend arm, pull fingers back with other hand", "sets": 3, "reps": 8, "hold_seconds": 15, "rest_seconds": 20, "notes": "Arm stays straight"},
@@ -1536,7 +1547,6 @@ INJURY_ICONS = {
     "Knee": "fa-shoe-prints",
     "Elbow": "fa-hand-point-right",
     "Hip": "fa-person-walking",
-    "Neck": "fa-head-side-virus",
     "Wrist": "fa-hand-paper",
     "Ankle": "fa-socks",
     "Back": "fa-person",
@@ -1550,7 +1560,7 @@ async def generate_rehab_plan(request: RehabPlanRequest):
     goals = [g.strip() for g in request.rehab_goals]
     difficulty = request.difficulty or "Beginner"
 
-    valid_locations = ["Shoulder", "Knee", "Elbow", "Hip", "Neck", "Wrist", "Ankle", "Back"]
+    valid_locations = ["Shoulder", "Knee", "Elbow", "Hip", "Wrist", "Ankle", "Back"]
     valid_goals = ["Pain Reduction", "Increase ROM", "Strength Building", "Daily Mobility"]
 
     if location not in valid_locations:
@@ -1637,7 +1647,6 @@ async def get_rehab_plan_options():
             {"id": "Knee", "label": "Knee", "icon": "fa-shoe-prints", "description": "ACL, meniscus, patella, arthritis"},
             {"id": "Elbow", "label": "Elbow", "icon": "fa-hand-point-right", "description": "Tennis elbow, golfer's elbow, strain"},
             {"id": "Hip", "label": "Hip", "icon": "fa-person-walking", "description": "Hip flexor, bursitis, labrum tear"},
-            {"id": "Neck", "label": "Neck", "icon": "fa-head-side-virus", "description": "Cervical strain, whiplash, stiffness"},
             {"id": "Wrist", "label": "Wrist", "icon": "fa-hand-paper", "description": "Carpal tunnel, sprain, tendonitis"},
             {"id": "Ankle", "label": "Ankle", "icon": "fa-socks", "description": "Sprain, Achilles tendon, instability"},
             {"id": "Back", "label": "Back", "icon": "fa-person", "description": "Lower back, disc, sciatica, posture"},

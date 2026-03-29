@@ -831,9 +831,6 @@ function displayAllExercises(exercises) {
                             <span class="target-reps">Target: ${exercise.target_reps} reps</span>
                         </div>
                         <div class="exercise-actions">
-                            <button class="btn btn-demo" onclick="openDemoVideo('${exercise.name}')">
-                                <i class="fas fa-film"></i> Demo Video
-                            </button>
                             <button class="btn btn-primary" onclick="startExercise('${exercise.name}')">
                                 <i class="fas fa-play"></i> Start Exercise
                             </button>
@@ -921,9 +918,6 @@ function displayCategoryExercises(category, exercises) {
             <p>${exercise.description || 'No description available'}</p>
             <p><strong>Instructions:</strong> ${exercise.instructions || 'No instructions available'}</p>
             <div class="exercise-actions">
-                <button class="btn btn-demo" onclick="openDemoVideo('${exercise.name}')">
-                    <i class="fas fa-film"></i> Demo Video
-                </button>
                 <button class="btn btn-primary" onclick="startExercise('${exercise.name}')">
                     <i class="fas fa-play"></i> Start Exercise
                 </button>
@@ -942,11 +936,6 @@ function displayCategoryExercises(category, exercises) {
  * Videos should be placed in: /static/demo_videos/<filename>
  */
 const EXERCISE_DEMO_MAP = {
-    // Neck
-    'Neck Flexion':                { video: 'neck_flexion.mp4',         tips: ['Keep your back straight', 'Move slowly and controlled', 'Do not force the range of motion', 'Stop if you feel sharp pain'] },
-    'Neck Extension':              { video: 'neck_extension.mp4',        tips: ['Sit or stand upright', 'Tilt head gently backward', 'Keep shoulders relaxed and down', 'Hold each position for 2–3 seconds'] },
-    'Neck Rotation':               { video: 'neck_rotation.mp4',         tips: ['Rotate chin toward shoulder', 'Keep chin level — do not tilt', 'Move only as far as comfortable', 'Return to center slowly'] },
-
     // Shoulder
     'Shoulder Flexion':            { video: 'shoulder_flexion.mp4',      tips: ['Keep elbow straight', 'Raise arm forward to shoulder height', 'Do not hunch your shoulder', 'Lower slowly — control the descent'] },
     'Shoulder Extension':          { video: 'shoulder_extension.mp4',    tips: ['Keep elbow straight', 'Move arm behind your body', 'Keep trunk stable — do not lean', 'Hold at end range for 1–2 seconds'] },
@@ -988,112 +977,8 @@ const EXERCISE_DEMO_MAP = {
     'Back Extension':              { video: 'back_extension.mp4',        tips: ['Lie face down, hands by shoulders', 'Lift chest off mat keeping hips down', 'Do not hyperextend — go pain-free range', 'Lower slowly'] },
 };
 
-/**
- * Build posture tips for an exercise, using the map or a generic fallback.
- */
-function getDemoTips(exerciseName) {
-    const entry = EXERCISE_DEMO_MAP[exerciseName];
-    if (entry && entry.tips && entry.tips.length) return entry.tips;
-    return [
-        'Move slowly and in a controlled manner',
-        'Stop if you experience sharp or increasing pain',
-        'Breathe steadily throughout the movement',
-        'Maintain correct posture at all times',
-    ];
-}
-
-/**
- * Returns the video URL for a given exercise, or null if none mapped.
- * Videos are served via the backend's /static mount: <backend>/static/demo_videos/<file>
- */
-function getDemoVideoUrl(exerciseName) {
-    const entry = EXERCISE_DEMO_MAP[exerciseName];
-    if (!entry || !entry.video) return null;
-    // API_BASE already points at the backend (e.g. http://localhost:8001)
-    return `${API_BASE}/static/demo_videos/${entry.video}`;
-}
-
-/** Tracks whether the user has viewed a demo for the current exercise this session. */
-let _demoWatchedForExercise = {};
-
-function openDemoVideo(exerciseName) {
-    const modal = document.getElementById('demoVideoModal');
-    const title = document.getElementById('demoModalTitle');
-    const player = document.getElementById('demoVideoPlayer');
-    const source = document.getElementById('demoVideoSource');
-    const placeholder = document.getElementById('demoVideoPlaceholder');
-    const placeholderMsg = document.getElementById('demoPlaceholderMsg');
-    const tipsList = document.getElementById('demoTipsList');
-
-    if (!modal) return;
-
-    // Set title
-    if (title) title.textContent = exerciseName + ' — Demo';
-
-    // Set video or show placeholder
-    const videoUrl = getDemoVideoUrl(exerciseName);
-    if (videoUrl) {
-        source.src = videoUrl;
-        player.load();
-        player.style.display = 'block';
-        placeholder.style.display = 'none';
-    } else {
-        player.style.display = 'none';
-        player.pause();
-        source.src = '';
-        placeholder.style.display = 'flex';
-        if (placeholderMsg) placeholderMsg.textContent = `Demo video for "${exerciseName}" will be available soon.`;
-    }
-
-    // Render tips
-    const tips = getDemoTips(exerciseName);
-    if (tipsList) {
-        tipsList.innerHTML = tips.map(t =>
-            `<div class="demo-tip-pill"><i class="fas fa-check-circle"></i><span>${t}</span></div>`
-        ).join('');
-    }
-
-    // Track that user opened demo for this exercise
-    _demoWatchedForExercise[exerciseName] = true;
-
-    // Store which exercise this demo belongs to (for "Start Exercise Now" button)
-    modal.dataset.exercise = exerciseName || '';
-
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeDemoVideo() {
-    const modal = document.getElementById('demoVideoModal');
-    const player = document.getElementById('demoVideoPlayer');
-    if (player) { player.pause(); }
-    if (modal) { modal.classList.remove('active'); }
-    document.body.style.overflow = '';
-}
-
-function closeDemoAndStart() {
-    const modal = document.getElementById('demoVideoModal');
-    const exerciseName = modal ? modal.dataset.exercise : '';
-    closeDemoVideo();
-    if (exerciseName) {
-        startExercise(exerciseName);
-    }
-}
-
-function handleDemoModalBackdrop(event) {
-    if (event.target === document.getElementById('demoVideoModal')) {
-        closeDemoVideo();
-    }
-}
-
 // ── Smart Start Reminder ──────────────────────────────────────────────
 function showStartReminder() {
-    // Only show reminder if user hasn't watched the demo for this exercise yet
-    if (currentExercise && _demoWatchedForExercise[currentExercise]) {
-        // Already watched — start directly
-        startCamera();
-        return;
-    }
     const modal = document.getElementById('startReminderModal');
     const nameEl = document.getElementById('reminderExerciseName');
     if (nameEl) nameEl.textContent = currentExercise || 'this exercise';
@@ -1101,13 +986,6 @@ function showStartReminder() {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-}
-
-function closeReminderAndOpenDemo() {
-    const modal = document.getElementById('startReminderModal');
-    if (modal) modal.classList.remove('active');
-    document.body.style.overflow = '';
-    if (currentExercise) openDemoVideo(currentExercise);
 }
 
 function closeReminderAndStart() {
@@ -1123,8 +1001,45 @@ function handleReminderBackdrop(event) {
     }
 }
 
+// Exercise to category mapping
+const EXERCISE_CATEGORY_MAP = {
+    'Shoulder Flexion': 'Shoulder',
+    'Shoulder Extension': 'Shoulder',
+    'Shoulder Abduction': 'Shoulder',
+    'Shoulder Adduction': 'Shoulder',
+    'Shoulder Internal Rotation': 'Shoulder',
+    'Shoulder External Rotation': 'Shoulder',
+    'Shoulder Horizontal Abduction': 'Shoulder',
+    'Shoulder Horizontal Adduction': 'Shoulder',
+    'Shoulder Circumduction': 'Shoulder',
+    'Elbow Flexion': 'Elbow',
+    'Elbow Extension': 'Elbow',
+    'Wrist Flexion': 'Wrist',
+    'Wrist Extension': 'Wrist',
+    'Hip Abduction': 'Hip',
+    'Hip Flexion': 'Hip',
+    'Knee Flexion': 'Knee',
+    'Knee Extension': 'Knee',
+    'Ankle Dorsiflexion': 'Ankle',
+    'Ankle Plantarflexion': 'Ankle',
+    'Ankle Inversion': 'Ankle',
+    'Ankle Eversion': 'Ankle',
+    'Ankle Circles': 'Ankle',
+    'Body Weight Squat': 'Squat',
+    'Wall Sit': 'Squat',
+    'Sumo Squat': 'Squat',
+    'Partial Squat': 'Squat',
+    'Squat Hold': 'Squat',
+    'Back Extension': 'Back'
+};
+
+function getExerciseCategory(exerciseName) {
+    return EXERCISE_CATEGORY_MAP[exerciseName] || 'Neck';  // Default to Neck
+}
+
 function startExercise(exerciseName) {
     currentExercise = exerciseName;
+    currentCategory = getExerciseCategory(exerciseName);  // Determine category
     document.getElementById('exerciseTitle').textContent = exerciseName;
     
     // Reset exercise state when switching exercises
@@ -1149,15 +1064,16 @@ function startExercise(exerciseName) {
         document.getElementById('repCount').textContent = '0';
     }
     
-    // Notify backend of exercise selection
+    // Notify backend of exercise selection WITH category
     if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(JSON.stringify({
             type: 'select_exercise',
-            exercise_name: exerciseName
+            exercise_name: exerciseName,
+            category: currentCategory  // Include category for proper state tracking
         }));
     }
     
-    console.log(`✅ Started exercise: ${exerciseName} (Phase reset to null - will initialize on first frame)`);
+    console.log(`✅ Started exercise: ${exerciseName} (Category: ${currentCategory}, Phase reset to null - will initialize on first frame)`);
     
     // Warn user if not logged in
     if (!currentUser || !authToken) {
@@ -3190,11 +3106,12 @@ function startFrameSending() {
                 reader.onloadend = function () {
                     const base64data = reader.result.split(',')[1];
 
-                    // Include exercise name for backend rep counting
+                    // Include exercise name and category for backend rep counting
                     websocket.send(JSON.stringify({
                         type: 'frame',
                         frame_data: base64data,
-                        exercise_name: currentExercise || null  // Send selected exercise, null for auto-detection
+                        exercise_name: currentExercise || null,  // Send selected exercise
+                        category: getExerciseCategory(currentExercise) || 'Neck'  // Send category for state tracking
                     }));
                 };
                 reader.readAsDataURL(blob);

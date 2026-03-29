@@ -134,35 +134,6 @@ def populate_exercises():
             difficulty="Beginner"
         ),
         
-        # Neck Exercises
-        Exercise(
-            name="Neck Flexion",
-            description="Bring chin toward chest",
-            category="Neck",
-            instructions="Slowly bring your chin toward your chest, hold for 2 seconds, then return to neutral",
-            target_reps=10,
-            rest_time_seconds=15,
-            difficulty="Beginner"
-        ),
-        Exercise(
-            name="Neck Extension",
-            description="Tilt head backward",
-            category="Neck",
-            instructions="Slowly tilt your head backward, hold for 2 seconds, then return to neutral",
-            target_reps=10,
-            rest_time_seconds=15,
-            difficulty="Beginner"
-        ),
-        Exercise(
-            name="Neck Rotation",
-            description="Turn head to look over shoulder",
-            category="Neck",
-            instructions="Slowly turn your head to look over your shoulder, hold for 2 seconds, then switch sides",
-            target_reps=8,
-            rest_time_seconds=20,
-            difficulty="Beginner"
-        ),
-        
         # Back Exercises
         Exercise(
             name="Back Extension",
