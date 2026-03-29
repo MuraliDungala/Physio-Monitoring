@@ -230,7 +230,10 @@ function setupEventListeners() {
         const resetBtn = document.getElementById('resetBtn');
 
         if (startBtn) {
-            startBtn.addEventListener('click', showStartReminder);
+            startBtn.addEventListener('click', () => {
+                currentExercise = currentExercise || 'exercise';
+                startCamera();
+            });
             console.log('✓ Start button listener attached');
         } else {
             console.warn('⚠️ Start button not found');
@@ -978,29 +981,6 @@ const EXERCISE_DEMO_MAP = {
 };
 
 // ── Smart Start Reminder ──────────────────────────────────────────────
-function showStartReminder() {
-    const modal = document.getElementById('startReminderModal');
-    const nameEl = document.getElementById('reminderExerciseName');
-    if (nameEl) nameEl.textContent = currentExercise || 'this exercise';
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeReminderAndStart() {
-    const modal = document.getElementById('startReminderModal');
-    if (modal) modal.classList.remove('active');
-    document.body.style.overflow = '';
-    startCamera();
-}
-
-function handleReminderBackdrop(event) {
-    if (event.target === document.getElementById('startReminderModal')) {
-        closeReminderAndStart();
-    }
-}
-
 // Exercise to category mapping
 const EXERCISE_CATEGORY_MAP = {
     'Shoulder Flexion': 'Shoulder',
