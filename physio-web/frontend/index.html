@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhysioMonitor - AI-Powered Physiotherapy</title>
     <script>
-        window.API_BASE_URL = 'https://physio-monitoring-backend.onrender.com';
+        window.API_BASE_URL = window.API_BASE_URL || localStorage.getItem('API_BASE_URL') || 'https://physio-monitoring-backend.onrender.com';
     </script>
+    <script src="config.js?v=2"></script>
     <link rel="stylesheet" href="style.css?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -278,6 +279,7 @@
                         <div class="category-card" data-category="Shoulder" onclick="loadCategoryExercises('Shoulder')"><div class="cat-icon ci-shoulder"><i class="fas fa-hand-rock"></i></div><div class="cat-info"><h3>Shoulder</h3><p>Strengthening and flexibility</p><span class="cat-count">6 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                         <div class="category-card" data-category="Elbow" onclick="loadCategoryExercises('Elbow')"><div class="cat-icon ci-elbow"><i class="fas fa-hand-fist"></i></div><div class="cat-info"><h3>Elbow</h3><p>Joint exercises and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                         <div class="category-card" data-category="Wrist" onclick="loadCategoryExercises('Wrist')"><div class="cat-icon ci-wrist"><i class="fas fa-hand"></i></div><div class="cat-info"><h3>Wrist</h3><p>Mobility and strengthening</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
+                        <div class="category-card" data-category="Neck" onclick="loadCategoryExercises('Neck')"><div class="cat-icon ci-neck"><i class="fas fa-head-side-mask"></i></div><div class="cat-info"><h3>Neck</h3><p>Stretches and mobility</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                         <div class="category-card" data-category="Hip" onclick="loadCategoryExercises('Hip')"><div class="cat-icon ci-hip"><i class="fas fa-person-walking"></i></div><div class="cat-info"><h3>Hip</h3><p>Joint mobility exercises</p><span class="cat-count">4 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                         <div class="category-card" data-category="Knee" onclick="loadCategoryExercises('Knee')"><div class="cat-icon ci-knee"><i class="fas fa-bone"></i></div><div class="cat-info"><h3>Knee</h3><p>Strengthening and rehabilitation</p><span class="cat-count">2 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
                         <div class="category-card" data-category="Ankle" onclick="loadCategoryExercises('Ankle')"><div class="cat-icon ci-ankle"><i class="fas fa-shoe-prints"></i></div><div class="cat-info"><h3>Ankle</h3><p>Stability and mobility</p><span class="cat-count">3 exercises</span></div><div class="cat-arrow"><i class="fas fa-arrow-right"></i></div></div>
@@ -299,6 +301,7 @@
                         <button class="filter-chip" onclick="filterExercises(this, 'Shoulder')">Shoulder</button>
                         <button class="filter-chip" onclick="filterExercises(this, 'Elbow')">Elbow</button>
                         <button class="filter-chip" onclick="filterExercises(this, 'Wrist')">Wrist</button>
+                        <button class="filter-chip" onclick="filterExercises(this, 'Neck')">Neck</button>
                         <button class="filter-chip" onclick="filterExercises(this, 'Hip')">Hip</button>
                         <button class="filter-chip" onclick="filterExercises(this, 'Knee')">Knee</button>
                         <button class="filter-chip" onclick="filterExercises(this, 'Ankle')">Ankle</button>
@@ -1069,7 +1072,6 @@
     <!-- ==================== DEBUGGING PANEL ==================== -->
     <div id="debugPanel" class="debug-panel" style="display:none;"></div>
 
-    <script src="config.js?v=1"></script>
     <script src="script.js?v=14"></script>
     
     <!-- New Module Scripts (in dependency order) -->

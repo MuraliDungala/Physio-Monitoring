@@ -107,6 +107,7 @@ function getAPIBaseURL() {
 }
 
 const API_BASE = getAPIBaseURL();
+window.API_BASE = API_BASE;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {

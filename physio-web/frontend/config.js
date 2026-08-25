@@ -2,7 +2,13 @@
 // Load environment variables based on deployment
 
 const API_BASE_URL = (() => {
-    // Check if API URL is already set by environment (e.g., via Vercel env)
+    // Check if custom API URL is stored in localStorage
+    const savedUrl = localStorage.getItem('API_BASE_URL');
+    if (savedUrl) {
+        return savedUrl;
+    }
+
+    // Check if API URL is set by environment
     if (window.__API_BASE_URL__) {
         return window.__API_BASE_URL__;
     }
@@ -13,8 +19,8 @@ const API_BASE_URL = (() => {
     
     // Production domains
     if (protocol === 'https:') {
-        // For Vercel deployment, use the hardcoded Render backend URL
-        if (hostname.includes('vercel.app')) {
+        // For Vercel or external deployment, use the deployed Render backend URL
+        if (hostname.includes('vercel.app') || hostname !== 'localhost') {
             return 'https://physio-monitoring-backend.onrender.com';
         }
         

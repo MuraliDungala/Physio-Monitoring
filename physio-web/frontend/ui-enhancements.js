@@ -251,7 +251,7 @@ async function sendFloatingChat() {
 
     // Call the AI /chat endpoint
     try {
-        const API_BASE = `http://${window.location.hostname}:8001`;
+        const API_BASE = window.API_BASE_URL || (typeof window.API_BASE !== 'undefined' ? window.API_BASE : 'https://physio-monitoring-backend.onrender.com');
         const ctx = (typeof getChatContext === 'function') ? getChatContext() : {};
 
         const resp = await fetch(`${API_BASE}/chat`, {
