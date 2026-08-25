@@ -188,15 +188,31 @@ function setupEventListeners() {
 
         // Auth buttons
         const loginBtn = document.getElementById('loginBtn');
+        const registerNavBtn = document.getElementById('registerNavBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         if (loginBtn) {
-            loginBtn.addEventListener('click', showLoginModal);
+            loginBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                showLoginModal();
+            });
             console.log('✓ Login button listener attached');
         } else {
             console.warn('⚠️ Login button not found');
         }
+        if (registerNavBtn) {
+            registerNavBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                showRegisterModal();
+            });
+            console.log('✓ Register button listener attached');
+        } else {
+            console.warn('⚠️ Register button not found');
+        }
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', logout);
+            logoutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                logout();
+            });
             console.log('✓ Logout button listener attached');
         } else {
             console.warn('⚠️ Logout button not found');
@@ -406,32 +422,40 @@ async function handleLogin(e) {
     e.preventDefault();
 
     const formData = new FormData(e.target);
-    const username = formData.get('username');
-    const password = formData.get('password');
+    const username = (formData.get('username') || '').trim();
+    const password = formData.get('password') || '';
 
     // Client-side validation
     if (!username || username.length < 3) {
-        showModalAlert('loginAlert', 'Username must be at least 3 characters', 'error');
+        showModalAlert('loginAlert', 'Please enter a valid username or email address.', 'error');
         return;
     }
     if (!password || password.length < 6) {
-        showModalAlert('loginAlert', 'Password must be at least 6 characters', 'error');
+        showModalAlert('loginAlert', 'Password must be at least 6 characters.', 'error');
         return;
     }
 
-    // Show loading state
+    // Show loading state & disable button to prevent double submissions
     const submitBtn = document.getElementById('loginSubmitBtn');
-    if (submitBtn) { submitBtn.classList.add('btn-loading'); submitBtn.querySelector('i').className = 'fas fa-spinner'; }
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('btn-loading');
+        const icon = submitBtn.querySelector('i');
+        if (icon) icon.className = 'fas fa-spinner fa-spin';
+    }
     hideModalAlert('loginAlert');
 
     try {
         console.log('🔐 Attempting login with API:', API_BASE);
-        const response = await fetch(`${API_BASE}/token`, {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
         });
 
         if (response.ok) {
@@ -457,17 +481,25 @@ async function handleLogin(e) {
                 
                 // Navigate to dashboard and load this user's data
                 showPage('dashboard');
+            } else {
+                showModalAlert('loginAlert', 'Failed to retrieve profile. Please try again.', 'error');
             }
         } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('Login error response:', response.status, errorData);
-            showModalAlert('loginAlert', errorData.detail || 'Invalid username or password. Please try again.', 'error');
+            const msg = errorData.detail || 'Invalid email/username or password. Please try again.';
+            showModalAlert('loginAlert', msg, 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showModalAlert('loginAlert', 'Connection error. Please check if the server is running.', 'error');
+        showModalAlert('loginAlert', 'Unable to connect to the server. Please check your network or try again shortly.', 'error');
     } finally {
-        if (submitBtn) { submitBtn.classList.remove('btn-loading'); submitBtn.querySelector('i').className = 'fas fa-sign-in-alt'; }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-loading');
+            const icon = submitBtn.querySelector('i');
+            if (icon) icon.className = 'fas fa-sign-in-alt';
+        }
     }
 }
 
@@ -476,36 +508,47 @@ async function handleRegister(e) {
 
     const formData = new FormData(e.target);
     const userData = {
-        username: formData.get('username'),
-        email: formData.get('email'),
-        full_name: formData.get('full_name'),
-        password: formData.get('password')
+        username: (formData.get('username') || '').trim(),
+        email: (formData.get('email') || '').trim().toLowerCase(),
+        full_name: (formData.get('full_name') || '').trim(),
+        password: formData.get('password') || ''
     };
 
     // Client-side validation
     if (!userData.username || userData.username.length < 3) {
-        showModalAlert('registerAlert', 'Username must be at least 3 characters long', 'error');
+        showModalAlert('registerAlert', 'Username must be at least 3 characters long.', 'error');
         return;
     }
 
     if (!userData.email || !userData.email.includes('@') || !userData.email.includes('.')) {
-        showModalAlert('registerAlert', 'Please enter a valid email address', 'error');
+        showModalAlert('registerAlert', 'Please enter a valid email address.', 'error');
         return;
     }
 
     if (!userData.password || userData.password.length < 6) {
-        showModalAlert('registerAlert', 'Password must be at least 6 characters long', 'error');
+        showModalAlert('registerAlert', 'Password must be at least 6 characters long.', 'error');
         return;
     }
 
     if (userData.password.length > 72) {
-        showModalAlert('registerAlert', 'Password must be less than 72 characters long', 'error');
+        showModalAlert('registerAlert', 'Password must be less than 72 characters long.', 'error');
         return;
     }
 
-    // Show loading state
+    const agreeTerms = document.getElementById('agreeTerms');
+    if (agreeTerms && !agreeTerms.checked) {
+        showModalAlert('registerAlert', 'Please agree to the Terms of Service & Privacy Policy.', 'error');
+        return;
+    }
+
+    // Show loading state & disable button
     const submitBtn = document.getElementById('registerSubmitBtn');
-    if (submitBtn) { submitBtn.classList.add('btn-loading'); submitBtn.querySelector('i').className = 'fas fa-spinner'; }
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('btn-loading');
+        const icon = submitBtn.querySelector('i');
+        if (icon) icon.className = 'fas fa-spinner fa-spin';
+    }
     hideModalAlert('registerAlert');
 
     try {
@@ -525,24 +568,45 @@ async function handleRegister(e) {
 
         if (response.ok) {
             const user = await response.json();
-            console.log('✅ Registration successful');
+            console.log('✅ Registration successful:', user.username);
             
             // Reset registration form
             document.getElementById('registerForm').reset();
             
-            // Close modal and show success
+            // Close register modal and transition to login
             closeModal();
-            showNotification('✅ Account created successfully! Please log in.', 'success');
+            showNotification('✅ Account created successfully! Please sign in.', 'success');
+            
+            setTimeout(() => {
+                showLoginModal();
+                const loginUserInput = document.querySelector('#loginForm input[name="username"]');
+                if (loginUserInput) loginUserInput.value = userData.username;
+            }, 500);
         } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('Registration error response:', response.status, errorData);
-            showModalAlert('registerAlert', errorData.detail || 'Registration failed. Username or email may already be taken.', 'error');
+            let msg = errorData.detail;
+            if (response.status === 400 && msg) {
+                if (msg.toLowerCase().includes('username')) {
+                    msg = 'This username is already taken. Please choose another.';
+                } else if (msg.toLowerCase().includes('email')) {
+                    msg = 'An account with this email already exists. Please log in.';
+                }
+            } else {
+                msg = msg || 'Unable to create account. Please try again.';
+            }
+            showModalAlert('registerAlert', msg, 'error');
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showModalAlert('registerAlert', 'Connection error. Please check if the server is running.', 'error');
+        showModalAlert('registerAlert', 'Unable to connect to the server. Please check your connection.', 'error');
     } finally {
-        if (submitBtn) { submitBtn.classList.remove('btn-loading'); submitBtn.querySelector('i').className = 'fas fa-user-plus'; }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-loading');
+            const icon = submitBtn.querySelector('i');
+            if (icon) icon.className = 'fas fa-user-plus';
+        }
     }
 }
 
@@ -5372,3 +5436,19 @@ document.head.appendChild(style);
         };
     }
 })();
+
+// Expose core navigation, exercise, and authentication functions to window
+window.showPage = showPage;
+window.startExercise = startExercise;
+window.loadCategoryExercises = loadCategoryExercises;
+window.loadAllExercises = loadAllExercises;
+window.filterExercises = filterExercises;
+window.showLoginModal = showLoginModal;
+window.showRegisterModal = showRegisterModal;
+window.closeModal = closeModal;
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.handleForgotPassword = handleForgotPassword;
+window.logout = logout;
+window.exitExercise = exitExercise;
+
