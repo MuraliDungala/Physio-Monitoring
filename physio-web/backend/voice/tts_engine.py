@@ -1,4 +1,7 @@
-import pyttsx3
+try:
+    import pyttsx3
+except Exception as e:
+    pyttsx3 = None
 import threading
 import queue
 import time
@@ -15,6 +18,10 @@ class TTSEngine:
         
     def initialize_engine(self):
         """Initialize the TTS engine"""
+        if pyttsx3 is None:
+            logging.warning("pyttsx3 module not available")
+            self.engine = None
+            return
         try:
             self.engine = pyttsx3.init()
             

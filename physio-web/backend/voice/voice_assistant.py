@@ -4,7 +4,10 @@ Provides context-aware, event-driven audio feedback during physiotherapy exercis
 OPTIMIZED FOR: Zero-delay simultaneous voice output during exercises
 """
 
-import pyttsx3
+try:
+    import pyttsx3
+except Exception as e:
+    pyttsx3 = None
 import threading
 import queue
 import time
@@ -101,6 +104,10 @@ class VoiceAssistant:
     
     def _initialize_engine(self):
         """Initialize main pyttsx3 engine (backup for initialization)"""
+        if pyttsx3 is None:
+            logger.warning("pyttsx3 not available on this platform")
+            self.engine = None
+            return
         try:
             self.engine = pyttsx3.init()
             

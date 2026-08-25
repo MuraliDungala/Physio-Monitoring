@@ -403,42 +403,182 @@ const i18n = {
             up: 'Up',
             down: 'Down',
             all: 'All',
+        },
+        te: {
+            // ===== BRAND & NAVIGATION =====
+            physioMonitor: 'ఫిజియోమానిటర్',
+            aiHealthcare: 'AI హెల్త్‌కేర్',
+            home: 'హోమ్',
+            dashboard: 'డ్యాష్‌బోర్డ్',
+            exercises: 'వ్యాయామాలు',
+            reports: 'నివేదికలు',
+            rehabPlan: 'పునరావాస ప్రణాళిక',
+            aiAssistant: 'AI అసిస్టెంట్',
+            settings: 'సెట్టింగ్‌లు',
+            tracking: 'ట్రాకింగ్',
+            main: 'ప్రధాన విభాగం',
+            trackingSection: 'ట్రాకింగ్',
+            support: 'మద్దతు',
+            guest: 'అతిథి',
+            patient: 'రోగి',
+            
+            // ===== TOPBAR & SEARCH =====
+            voiceAssistant: 'వాయిస్ అసిస్టెంట్',
+            notifications: 'నోటిఫికేషన్‌లు',
+            logout: 'లాగౌట్',
+            login: 'లాగిన్',
+            register: 'రిజిస్టర్',
+            searchExercises: 'వ్యాయామాలు, నివేదికలు శోధించండి...',
+            switchLanguage: 'భాషను మార్చండి',
+            clearAll: 'అన్నీ తొలగించు',
+            
+            // ===== HOME PAGE =====
+            heroTag: 'AI ఆధారిత ప్లాట్‌ఫారమ్',
+            heroBadge: 'AI ఆధారిత ప్లాట్‌ఫారమ్',
+            intelligentPhysiotherapy: 'ఇంటెలిజెంట్',
+            physiotherapyMonitoring: 'ఫిజియోథెరపీ',
+            monitoring: 'మానిటరింగ్',
+            heroDesc: 'రియల్-టైమ్ శరీర భంగిమ దిద్దుబాటు, అనుకూల పునరావాస కార్యక్రమాలు మరియు మీ రికవరీ కోసం AI విశ్లేషణలు.',
+            startTherapy: 'థెరపీ ప్రారంభించండి',
+            exercises28: '28+',
+            exercisesLabel: 'వ్యాయామాలు',
+            bodyAreas8: '8',
+            bodyAreasLabel: 'శరీర భాగాలు',
+            aiPowered: 'AI',
+            aiPoweredLabel: 'ఆధారితం',
+            analytics: 'విశ్లేషణలు',
+            features: 'ఫీచర్లు',
+            featuresHeading: 'రికవరీకి కావాల్సినవన్నీ ఇక్కడే',
+            featuresSubHeading: 'ఆర్టిఫిషియల్ ఇంటెలిజెన్స్ ఆధారిత పూర్తి సాధనాలు',
+            realtimeCamera: 'రియల్-టైమ్ కెమెరా ట్రాకింగ్',
+            realtimeCameraDesc: 'మీడియాపైప్ ద్వారా 33 శరీర భాగాలను అత్యంత ఖచ్చితత్వంతో గుర్తిస్తుంది',
+            progressDashboard: 'పురోగతి డ్యాష్‌బోర్డ్',
+            progressDashboardDesc: 'సెషన్ ట్రెండ్‌లు, క్వాలిటీ స్కోర్‌లు మరియు మైలురాళ్లు తెలిపే విజువల్స్',
+            aiRecommendations: 'AI సిఫార్సులు',
+            aiRecommendationsDesc: 'గత పనితీరు మరియు రికవరీ లక్ష్యాల ఆధారంగా స్మార్ట్ వ్యాయామ సూచనలు',
+            voiceGuidance: 'వాయిస్ గైడెన్స్',
+            voiceGuidanceDesc: 'భంగిమ దిద్దుబాటు, రెప్ కౌంట్ మరియు ఆడియో సూచనలు',
+            howItWorks: 'ఇది ఎలా పనిచేస్తుంది',
+            howItWorksHeading: 'ఎలా పనిచేస్తుంది',
+            getStartedSteps: 'నాలుగు సులభమైన దశల్లో ప్రారంభించండి',
+            process: 'ప్రక్రియ',
+            selectExercise: 'వ్యాయామాన్ని ఎంచుకోండి',
+            selectExerciseDesc: '8 శరీర విభాగాల్లో 28+ వ్యాయామాల నుండి ఎంచుకోండి',
+            positionCamera: 'కెమెరా ముందు నిలబడండి',
+            positionCameraDesc: 'భంగిమ గుర్తింపు కోసం కెమెరా ముందు సరిగ్గా నిలబడండి',
+            getFeedback: 'సూచనలు పొందండి',
+            getFeedbackDesc: 'రియల్-టైమ్‌లో సరైన భంగిమ దిద్దుబాటు మార్గదర్శకత్వాన్ని పొందండి',
+            trackProgress: 'పురోగతిని ట్రాక్ చేయండి',
+            trackProgressDesc: 'వివరణాత్మక విశ్లేషణలతో మీ మెరుగుదలను గమనించండి',
+            
+            // ===== DASHBOARD PAGE =====
+            dashboardGreeting: "తిరిగి స్వాగతం! మీ తాజా పురోగతి ఇక్కడ ఉంది.",
+            lastDays7: 'గత 7 రోజులు',
+            lastDays30: 'గత 30 రోజులు',
+            lastDays90: 'గత 90 రోజులు',
+            allTime: 'మొత్తం సమయం',
+            refresh: 'రిఫ్రెష్',
+            totalSessions: 'మొత్తం సెషన్లు',
+            totalReps: 'మొత్తం రెప్స్',
+            avgQuality: 'సగటు క్వాలిటీ',
+            daysActive: 'యాక్టివ్ రోజులు',
+            dayStreak: 'రోజుల స్ట్రీక్',
+            totalDuration: 'మొత్తం సమయం',
+            noData: 'డేటా లేదు',
+            weeklyActivity: 'వారపు కార్యాచరణ',
+            thisWeek: 'ఈ వారం',
+            qualityTrend: 'నాణ్యత ట్రెండ్',
+            progress: 'పురోగతి',
+            aiInsights: 'AI అంతర్దృష్టులు',
+            completeExerciseSessions: 'AI అంతర్దృష్టులు పొందడానికి కొన్ని వ్యాయామ సెషన్లను పూర్తి చేయండి.',
+            bodyPerformance: 'శరీర పనితీరు',
+            noExerciseData: 'ఇంకా వ్యాయామ డేటా లేదు. ట్రాక్ చేయడానికి సెషన్ ప్రారంభించండి.',
+            
+            // ===== BODY PARTS =====
+            shoulders: 'భుజాలు',
+            elbows: 'మోచేతులు',
+            knees: 'మోకాళ్ళు',
+            hips: 'తుంటి భాగాలు',
+            necks: 'మెడ',
+            wrists: 'మణికట్లు',
+            ankles: 'చీలమండలు',
+            backs: 'వీపు',
+            shoulder: 'భుజం',
+            elbow: 'మోచేయి',
+            knee: 'మోకాలు',
+            hip: 'తుంటి',
+            neck: 'మెడ',
+            wrist: 'మణికట్టు',
+            ankle: 'చీలమండ',
+            back: 'వీపు',
+            squats: 'స్క్వాట్స్',
+            
+            // ===== COMMON ACTIONS =====
+            backAction: 'వెనుకకు',
+            submit: 'సమర్పించండి',
+            cancel: 'రద్దు చేయి',
+            save: 'సేవ్ చేయి',
+            delete: 'తొలగించు',
+            edit: 'సవరించు',
+            close: 'మూసివేయి',
+            startExercise: 'వ్యాయామం ప్రారంభించండి',
+            downloadPDF: 'PDF డౌన్‌లోడ్ చేయండి',
+            all: 'అన్నీ',
+            success: 'విజయం!',
+            error: 'లోపం సంభవించింది',
+            loading: 'లోడ్ అవుతోంది...'
         }
     },
     
     /**
-     * Get translated text (English only)
+     * Get translated text
      */
     t(key, params = {}) {
-        let text = this.translations.en[key] || key;
+        const lang = this.currentLanguage || 'en';
+        let text = (this.translations[lang] && this.translations[lang][key]) || 
+                   (this.translations.en && this.translations.en[key]) || 
+                   key;
         
         // Handle parameter interpolation
         Object.keys(params).forEach(param => {
-            text = text.replace(`{${param}}`, params[param]);
+            text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
         });
         
         return text;
     },
     
     /**
-     * Get language
+     * Get current language code
      */
     getLanguage() {
-        return 'en';
+        return this.currentLanguage || 'en';
+    },
+    
+    /**
+     * Set active language
+     */
+    setLanguage(lang) {
+        if (this.translations[lang]) {
+            this.currentLanguage = lang;
+            localStorage.setItem('app_language', lang);
+            document.documentElement.lang = lang;
+            this.updateUI();
+            window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
+            console.log(`🌐 Language switched to: ${lang}`);
+        }
     },
     
     /**
      * Get language name
      */
     getLanguageName() {
-        return 'English';
+        return this.currentLanguage === 'te' ? 'తెలుగు (Telugu)' : 'English';
     },
     
     /**
      * Update UI - Translate only marked elements
      */
     updateUI() {
-        // Update all elements with data-i18n attributes
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             const translatedText = this.t(key);
@@ -447,10 +587,20 @@ const i18n = {
                 el.placeholder = translatedText;
             } else if (el.tagName === 'TEXTAREA') {
                 el.placeholder = translatedText;
-            } else if (el.tagName === 'BUTTON' || el.tagName === 'A') {
-                el.textContent = translatedText;
-            } else {
-                el.textContent = translatedText;
+            } else if (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'SPAN' || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P') {
+                // If it has only text child, update textContent; if it has icons, find the text node
+                let textNode = null;
+                for (let node of el.childNodes) {
+                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim().length > 0) {
+                        textNode = node;
+                        break;
+                    }
+                }
+                if (textNode) {
+                    textNode.nodeValue = ' ' + translatedText;
+                } else if (el.children.length === 0) {
+                    el.textContent = translatedText;
+                }
             }
         });
     },
@@ -459,10 +609,14 @@ const i18n = {
      * Initialize i18n system
      */
     init() {
-        document.documentElement.lang = 'en';
+        this.currentLanguage = localStorage.getItem('app_language') || 'en';
+        document.documentElement.lang = this.currentLanguage;
         this.updateUI();
     }
 };
+
+// Expose globally
+window.i18n = i18n;
 
 // Auto-initialize on script load
 if (document.readyState === 'loading') {

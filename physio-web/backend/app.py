@@ -1,5 +1,8 @@
 import sys
 import os
+if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
@@ -96,12 +99,25 @@ if _frontend_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_frontend_dir)), name="static")
 
 # CORS middleware
-cors_origins = settings.get_cors_origins()
-logger.info(f"Configuring CORS for origins: {cors_origins}")
+trusted_origins = [
+    "https://physio-monitoring-frontend.vercel.app",
+    "http://localhost:8000",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5500",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:3000"
+]
+# Merge with any origins from settings
+for orig in settings.get_cors_origins():
+    if orig != "*" and orig not in trusted_origins:
+        trusted_origins.append(orig)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=trusted_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*|http://127\.0\.0\.1:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -133,7 +149,7 @@ class ConnectionManager:
         
         # 8 main exercise categories
         self.EXERCISE_CATEGORIES = [
-            "Shoulder", "Elbow", "Wrist", 
+            "Shoulder", "Elbow", "Wrist", "Neck",
             "Hip", "Knee", "Ankle", "Squat"
         ]
     
@@ -207,18 +223,15 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
-
 # Create database tables
 @app.on_event("startup")
 async def startup_event():
-    create_tables()
-    # Initialize default exercises
-    await init_default_exercises()
+    try:
+        create_tables()
+        # Initialize default exercises
+        await init_default_exercises()
+    except Exception as e:
+        logger.error(f"Startup initialization warning (non-fatal): {e}")
 
 async def init_default_exercises():
     """Initialize default exercises in database"""
@@ -231,6 +244,20 @@ async def init_default_exercises():
         # Add missing exercises
         missing_exercises = []
         
+        # Neck exercises
+        if "Neck Flexion" not in existing_names:
+            missing_exercises.append(Exercise(name="Neck Flexion", category="Neck",
+                    description="Gently bend neck forward",
+                    instructions="Lower your chin towards your chest smoothly, hold briefly, return to upright"))
+        if "Neck Extension" not in existing_names:
+            missing_exercises.append(Exercise(name="Neck Extension", category="Neck",
+                    description="Gently tilt head backward",
+                    instructions="Look upward and tilt head backward slowly, hold briefly, return to neutral"))
+        if "Neck Rotation" not in existing_names:
+            missing_exercises.append(Exercise(name="Neck Rotation", category="Neck",
+                    description="Turn head side to side",
+                    instructions="Turn head smoothly towards shoulder, hold 2 seconds, repeat for other side"))
+
         # Shoulder exercises
         if "Shoulder Flexion" not in existing_names:
             missing_exercises.append(Exercise(name="Shoulder Flexion", category="Shoulder", 
@@ -362,9 +389,10 @@ async def init_default_exercises():
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for deployment"""
+    """Health check endpoint for monitoring and deployment"""
     return {
         "status": "healthy",
+        "service": "PhysioMonitor API",
         "environment": settings.ENVIRONMENT,
         "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat()
@@ -600,7 +628,7 @@ def get_sessions_by_exercise(exercise_name: str, current_user: User = Depends(ge
 @app.get("/progress/stats")
 def get_progress_stats(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
     """Get comprehensive progress statistics for user"""
-    sessions = db.query(ExerciseSession).filter(ExerciseSession.user_id == current_user.id).all()
+    sessions = db.query(ExerciseSession).filter(ExerciseSession.user_id == current_user.id).order_by(ExerciseSession.date.desc()).all()
     
     if not sessions:
         return {
@@ -812,6 +840,13 @@ def get_rehab_progress(current_user: User = Depends(get_current_active_user), db
 
 # Initialize feature extractor
 feature_extractor = FeatureExtractor()
+_classification_engine = None
+
+def get_classification_engine():
+    global _classification_engine
+    if _classification_engine is None:
+        _classification_engine = ExerciseEngine()
+    return _classification_engine
 
 def extract_landmarks_from_frame(frame_data_b64: str) -> Optional[Dict]:
     """Extract landmarks from base64-encoded frame"""
@@ -824,9 +859,9 @@ def extract_landmarks_from_frame(frame_data_b64: str) -> Optional[Dict]:
         if frame is None:
             return None
         
-        # Process with MediaPipe
-        temp_engine = ExerciseEngine()
-        result = temp_engine.process_frame(frame, selected_exercise=None)
+        # Process with reusable engine
+        engine_instance = get_classification_engine()
+        result = engine_instance.process_frame(frame, selected_exercise=None)
         
         if result["landmarks_detected"]:
             return result.get("skeleton_data")
@@ -1791,13 +1826,6 @@ async def get_voice_debug(user_id: str, current_user: User = Depends(get_current
     except Exception as e:
         logger.error(f"Error getting voice debug info: {e}")
         return {"success": False, "message": str(e)}
-
-# Health check
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "message": "Physiotherapy Monitoring System is running"}
 
 # Serve frontend
 @app.get("/")

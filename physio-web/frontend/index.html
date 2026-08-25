@@ -71,6 +71,12 @@
                     </div>
                 </div>
                 <div class="topbar-right">
+                    <div class="lang-selector-wrap" style="margin-right: 8px;">
+                        <select id="langSelect" class="select-modern select-sm" onchange="if(window.i18n) window.i18n.setLanguage(this.value)" style="padding: 4px 8px; font-size: 13px; border-radius: 6px; cursor: pointer;" title="Select Language">
+                            <option value="en">🇬🇧 English</option>
+                            <option value="te">🇮🇳 తెలుగు</option>
+                        </select>
+                    </div>
                     <div class="topbar-icon-btn notif-btn" id="notificationBtn" role="button" tabindex="0" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span class="notif-badge" id="notifBadge">3</span>
@@ -1075,8 +1081,9 @@
     <script src="script.js?v=14"></script>
     
     <!-- New Module Scripts (in dependency order) -->
-    <script src="i18n.js?v=1"></script>
+    <script src="i18n.js?v=2"></script>
     <script src="loading-manager.js?v=1"></script>
+    <script src="voice-assistant-system.js?v=2"></script>
     <script src="physio-chatbot.js?v=1"></script>
     <script src="injury-predictor.js?v=1"></script>
     <script src="therapist-dashboard.js?v=1"></script>

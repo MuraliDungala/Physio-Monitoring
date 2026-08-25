@@ -786,10 +786,20 @@ async function loadAllExercises() {
             const errorText = await response.text();
             console.error(`Server error: ${response.status} - ${errorText}`);
             showNotification(`Failed to load exercises: ${response.status}`, 'error');
+            const exerciseList = document.getElementById('allExercisesList');
+            if (exerciseList) {
+                exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i><p>Unable to load exercises.</p><button class="btn btn-primary btn-sm" onclick="loadAllExercises()" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+            }
+            showPage('allExercises');
         }
     } catch (error) {
         console.error('Error loading all exercises:', error);
-        showNotification('Failed to load exercises. Check console for details.', 'error');
+        showNotification('Failed to load exercises. Retrying...', 'error');
+        const exerciseList = document.getElementById('allExercisesList');
+        if (exerciseList) {
+            exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i><p>Unable to load exercises. Server might be waking up.</p><button class="btn btn-primary btn-sm" onclick="loadAllExercises()" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+        }
+        showPage('allExercises');
     }
 }
 
@@ -886,10 +896,20 @@ async function loadCategoryExercises(category) {
             const errorText = await response.text();
             console.error(`Server error: ${response.status} - ${errorText}`);
             showNotification(`Failed to load exercises: ${response.status}`, 'error');
+            const exerciseList = document.getElementById('exerciseList');
+            if (exerciseList) {
+                exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i><p>Unable to load ${category} exercises.</p><button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+            }
+            showPage('exerciseList');
         }
     } catch (error) {
         console.error('Error loading exercises:', error);
-        showNotification('Failed to load exercises. Check console for details.', 'error');
+        showNotification('Failed to load exercises. Check connection.', 'error');
+        const exerciseList = document.getElementById('exerciseList');
+        if (exerciseList) {
+            exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i><p>Unable to load ${category} exercises. Server might be waking up.</p><button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+        }
+        showPage('exerciseList');
     }
 }
 

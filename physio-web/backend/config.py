@@ -22,6 +22,8 @@ class Settings:
         "DATABASE_URL",
         "sqlite:///./physio_monitoring.db"
     )
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
     # Security
     SECRET_KEY = os.getenv(
@@ -33,13 +35,11 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     
     # CORS
-    CORS_ORIGINS = os.getenv(
+    CORS_ORIGINS = [origin.strip() for origin in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,http://localhost:8001,http://127.0.0.1:8001,https://physio-monitoring-frontend.vercel.app"
-    ).split(",")
-    
-    # Add wildcard for development
-    if ENVIRONMENT == "development":
+        "*"
+    ).split(",") if origin.strip()]
+    if "*" not in CORS_ORIGINS:
         CORS_ORIGINS.append("*")
     
     # ML Models

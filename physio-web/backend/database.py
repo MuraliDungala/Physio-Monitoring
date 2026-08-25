@@ -6,8 +6,11 @@ import os
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./physio_monitoring.db")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -88,7 +91,11 @@ class RehabSession(Base):
 
 # Create tables
 def create_tables():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("[OK] Database tables created/verified")
+    except Exception as e:
+        print(f"[WARNING] Database table creation warning: {e}")
 
 # Dependency to get DB session
 def get_db():
