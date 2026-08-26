@@ -1,0 +1,20 @@
+{
+  "name": "physio-monitoring",
+  "version": "1.0.0",
+  "description": "Intelligent Physiotherapy Monitoring System",
+  "scripts": {
+    "dev": "npm --prefix physio-web/frontend run dev",
+    "dev:frontend": "npm --prefix physio-web/frontend run dev",
+    "dev:backend": "python start_server.py",
+    "start": "npm --prefix physio-web/frontend run start",
+    "build": "npm --prefix physio-web/frontend run build"
+  },
+  "keywords": [
+    "physiotherapy",
+    "ai",
+    "mediapipe",
+    "fastapi"
+  ],
+  "author": "",
+  "license": "ISC"
+}

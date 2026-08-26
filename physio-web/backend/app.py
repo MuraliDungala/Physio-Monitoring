@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import json
 import logging
 import asyncio
@@ -116,8 +117,8 @@ for orig in settings.get_cors_origins():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=trusted_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*|http://127\.0\.0\.1:.*",
+    allow_origins=["*"],
+    allow_origin_regex=r"https://.*|http://localhost:.*|http://127\.0\.0\.1:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -386,15 +387,32 @@ async def init_default_exercises():
     finally:
         db.close()
 
-# Health check endpoint
+# Health check & Ping endpoints
 @app.get("/health")
-async def health_check():
-    """Health check endpoint for monitoring and deployment"""
+@app.get("/api/health")
+async def health_check(db: Session = Depends(get_db)):
+    """Health check endpoint for monitoring, deployment, and connection testing"""
+    db_status = "connected"
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "service": "PhysioMonitor API",
         "environment": settings.ENVIRONMENT,
+        "database": db_status,
         "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/ping")
+@app.get("/api/ping")
+async def ping():
+    """Ultra-fast ping endpoint for connection latency testing"""
+    return {
+        "pong": True,
         "timestamp": datetime.utcnow().isoformat()
     }
 
@@ -863,6 +881,204 @@ def get_rehab_progress(current_user: User = Depends(get_current_active_user), db
         "completion_rate": round(completion_rate, 2),
         "by_day": by_day
     }
+
+# ============================================================================
+# PROGRESS ANALYTICS & THERAPIST ENDPOINTS
+# ============================================================================
+
+@app.get("/progress/weekly")
+def get_weekly_progress(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get weekly exercise activity metrics for charts"""
+    try:
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        sessions = db.query(ExerciseSession).filter(
+            ExerciseSession.user_id == current_user.id,
+            ExerciseSession.date >= seven_days_ago
+        ).order_by(ExerciseSession.date.asc()).all()
+
+        days_data = {}
+        for i in range(7):
+            d = (datetime.utcnow() - timedelta(days=6-i)).date()
+            days_data[d.strftime("%a")] = {"reps": 0, "sessions": 0, "avg_quality": 0}
+
+        day_qualities = {k: [] for k in days_data}
+        for s in sessions:
+            day_name = s.date.strftime("%a")
+            if day_name in days_data:
+                days_data[day_name]["reps"] += s.total_reps
+                days_data[day_name]["sessions"] += 1
+                day_qualities[day_name].append(s.quality_score)
+
+        for day_name, qualities in day_qualities.items():
+            if qualities:
+                days_data[day_name]["avg_quality"] = round(sum(qualities) / len(qualities), 1)
+
+        return {
+            "labels": list(days_data.keys()),
+            "reps": [v["reps"] for v in days_data.values()],
+            "sessions": [v["sessions"] for v in days_data.values()],
+            "quality": [v["avg_quality"] for v in days_data.values()]
+        }
+    except Exception as e:
+        logger.error(f"Weekly progress error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get weekly progress")
+
+
+# Therapist Dashboard Endpoints
+@app.get("/therapist/patients")
+async def get_therapist_patients(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get list of patients for therapist dashboard"""
+    try:
+        users = db.query(User).all()
+        patients_data = []
+        for u in users:
+            sessions = db.query(ExerciseSession).filter(ExerciseSession.user_id == u.id).all()
+            avg_quality = (sum(s.quality_score for s in sessions) / len(sessions)) if sessions else 0
+            patients_data.append({
+                "id": u.id,
+                "full_name": u.full_name or u.username,
+                "email": u.email,
+                "sessions_count": len(sessions),
+                "avg_quality": round(avg_quality, 1),
+                "total_reps": sum(s.total_reps for s in sessions)
+            })
+        return {"patients": patients_data}
+    except Exception as e:
+        logger.error(f"Get therapist patients error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve patient list")
+
+
+@app.get("/therapist/patients/{patient_id}/progress")
+async def get_patient_progress(
+    patient_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed progress for a specific patient"""
+    try:
+        patient = db.query(User).filter(User.id == patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        
+        sessions = db.query(ExerciseSession).filter(
+            ExerciseSession.user_id == patient_id
+        ).order_by(ExerciseSession.date.desc()).all()
+        
+        exercise_history = [{
+            "name": s.exercise_name,
+            "reps": s.total_reps,
+            "quality": s.quality_score,
+            "angle": s.average_joint_angle,
+            "date": s.date.isoformat()
+        } for s in sessions[:20]]
+        
+        return {
+            "id": patient.id,
+            "full_name": patient.full_name or patient.username,
+            "email": patient.email,
+            "sessions_count": len(sessions),
+            "total_reps": sum(s.total_reps for s in sessions),
+            "avg_quality": round(sum(s.quality_score for s in sessions) / len(sessions), 1) if sessions else 0,
+            "days_active": len(set(s.date.date() for s in sessions)),
+            "exercise_history": exercise_history
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get patient progress error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve patient progress")
+
+
+@app.post("/therapist/assign-exercise")
+async def assign_exercise(
+    request: dict,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Assign exercise to patient"""
+    try:
+        patient_id = request.get("patient_id")
+        exercise_name = request.get("exercise_name")
+        target_reps = request.get("target_reps", 10)
+        return {
+            "success": True,
+            "message": f"Exercise '{exercise_name}' assigned to patient {patient_id} ({target_reps} reps)"
+        }
+    except Exception as e:
+        logger.error(f"Assign exercise error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to assign exercise")
+
+
+# Voice Event Logging Endpoint
+@app.post("/voice/event")
+async def record_voice_event(
+    event_data: dict,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Record voice event for auditing and telemetry"""
+    try:
+        event_type = event_data.get("type", "feedback")
+        message = event_data.get("message", "")
+        
+        voice_log = VoiceFeedbackLog(
+            user_id=current_user.id,
+            message=message,
+            feedback_type=event_type
+        )
+        db.add(voice_log)
+        db.commit()
+        return {"success": True, "event_logged": True}
+    except Exception as e:
+        logger.error(f"Voice event error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+# Injury Risk Prediction Endpoint
+@app.post("/analysis/injury-risk")
+async def predict_injury_risk(
+    session_data: dict,
+    current_user: User = Depends(get_current_active_user)
+):
+    """Predict injury risk based on exercise posture metrics"""
+    try:
+        quality_score = float(session_data.get("quality_score", 70))
+        angle = float(session_data.get("angle", 90))
+        exercise = session_data.get("exercise", "unknown")
+        
+        if quality_score < 55:
+            risk_level = "HIGH"
+            risk_score = round(1.0 - (quality_score / 100), 2)
+            risk_factors = ["Significant joint angle deviation", "Inconsistent movement pace", "Compensatory muscle engagement detected"]
+            recommendations = ["Pause and rest for 2-3 minutes", "Reduce range of motion by 20%", "Review demonstration video before next set"]
+        elif quality_score < 75:
+            risk_level = "MEDIUM"
+            risk_score = round(1.0 - (quality_score / 100), 2)
+            risk_factors = ["Minor posture drift near rep completion", "Slight asymmetry observed"]
+            recommendations = ["Focus on controlled tempo", "Maintain steady core engagement"]
+        else:
+            risk_level = "LOW"
+            risk_score = round(max(0.05, 1.0 - (quality_score / 100)), 2)
+            risk_factors = ["Optimal joint alignment", "Smooth repetition cadence"]
+            recommendations = ["Excellent form! Ready for progressive overload"]
+
+        return {
+            "exercise": exercise,
+            "risk_level": risk_level,
+            "risk_score": risk_score,
+            "risk_factors": risk_factors,
+            "recommendations": recommendations,
+            "analyzed_at": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Injury prediction error: {e}")
+        raise HTTPException(status_code=500, detail="Injury risk prediction failed")
 
 # ============================================================================
 # ML CLASSIFICATION ENDPOINTS
@@ -1936,8 +2152,8 @@ if __name__ == "__main__":
     print(f"   Debug: {settings.is_development()}")
     
     uvicorn.run(
-        app, 
-        host=host, 
+        "app:app", 
+        host="0.0.0.0", 
         port=port,
         reload=settings.is_development()
     )

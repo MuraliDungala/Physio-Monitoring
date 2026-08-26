@@ -15,17 +15,7 @@ env = os.environ.copy()
 env["PYTHONUTF8"] = "1"
 env["PYTHONIOENCODING"] = "utf-8"
 
-# Locate the backend directory dynamically
-current_file = Path(__file__).resolve()
-if current_file.parent.name == "backend":
-    backend_dir = current_file.parent
-elif (current_file.parent / "physio-web" / "backend").exists():
-    backend_dir = current_file.parent / "physio-web" / "backend"
-elif (current_file.parent / "backend").exists():
-    backend_dir = current_file.parent / "backend"
-else:
-    backend_dir = current_file.parent
-
+backend_dir = Path(__file__).resolve().parent
 os.chdir(str(backend_dir))
 sys.path.insert(0, str(backend_dir))
 

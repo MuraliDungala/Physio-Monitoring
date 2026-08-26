@@ -66,48 +66,44 @@ let voiceAssistant = {
     synth: window.speechSynthesis || null
 };
 
-// API Configuration - IMPORTANT: Update this for production deployment
-// For development (localhost): Auto-detects backend on port 8000
-// For production (Vercel/deployed): Set window.API_BASE_URL BEFORE this script loads
-// 
-// PRODUCTION SETUP:
-// 1. Deploy backend to Render/Railway (get URL like: https://your-backend.onrender.com)
-// 2. Add to index.html BEFORE script.js loads:
-//    <script>
-//      window.API_BASE_URL = 'https://your-backend.onrender.com';
-//    </script>
-// 3. Or set via environment variable in deployment platform
+// API Configuration
+// Always reads the current backend URL.
+// Inline script in index.html guarantees window.API_BASE_URL = 'http://localhost:8000' on local dev.
 
-function getAPIBaseURL() {
-    // If explicitly set in environment/config
-    if (typeof window.API_BASE_URL !== 'undefined' && window.API_BASE_URL) {
-        console.log('🔗 Using configured API_BASE_URL:', window.API_BASE_URL);
-        return window.API_BASE_URL;
+function _resolveApiBase() {
+    const h = window.location.hostname;
+    // Always use localhost:8000 when on localhost
+    if (h === 'localhost' || h === '127.0.0.1') {
+        return 'http://localhost:8000';
     }
-    
-    // Auto-detect based on current location
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    
-    // If running on localhost, use localhost:8000
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        const url = `${protocol}//localhost:8000`;
-        console.log('🔗 Development mode - using local backend:', url);
-        return url;
-    }
-    
-    // If deployed on Vercel or other platform, must have explicit config
-    // Default to same domain (user should configure environment)
-    console.warn('⚠️ Production environment detected but API_BASE_URL not configured!');
-    console.warn('⚠️ Please set window.API_BASE_URL in environment or config before loading this script');
-    console.log('Attempted hostname:', hostname);
-    
-    // Fallback to same domain (may not work without proper backend)
-    return `${protocol}//${hostname}`;
+    // On production: use saved URL or Render URL
+    const saved = localStorage.getItem('API_BASE_URL');
+    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
+    if (window.API_BASE_URL && window.API_BASE_URL.trim()) return window.API_BASE_URL.trim().replace(/\/+$/, '');
+    return 'https://physio-monitoring-backend.onrender.com';
 }
 
-const API_BASE = getAPIBaseURL();
+// Simple getter function - call this every time before a fetch
+function getAPIBaseURL() { return _resolveApiBase(); }
+
+// API_BASE is a convenience alias. All fetch calls MUST use getAPIBaseURL() not this static variable.
+let API_BASE = _resolveApiBase();
 window.API_BASE = API_BASE;
+
+console.log('[PhysioMonitor] API_BASE resolved to:', API_BASE);
+
+
+
+// Listen for dynamic API base URL changes
+window.addEventListener('api-base-changed', function (e) {
+    API_BASE = e.detail.url;
+    window.API_BASE = API_BASE;
+    console.log('🔄 script.js updated API_BASE to:', API_BASE);
+    checkServerHealthLive();
+    if (typeof loadAllExercises === 'function' && currentPage === 'exercises') {
+        loadAllExercises();
+    }
+});
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {
@@ -119,6 +115,10 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
     setupEventListeners();
     checkAuthStatus();
+    checkServerHealthLive();
+    
+    // Periodically monitor server connection every 45s
+    setInterval(checkServerHealthLive, 45000);
 });
 
 function initializeApp() {
@@ -366,6 +366,15 @@ function setupEventListeners() {
 function showPage(pageName) {
     console.log(`Showing page: ${pageName}`);
 
+    if (pageName === 'login') {
+        showLoginModal();
+        return;
+    }
+    if (pageName === 'register') {
+        showRegisterModal();
+        return;
+    }
+
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -405,11 +414,13 @@ function showPage(pageName) {
 
 // Authentication
 function showLoginModal() {
-    document.getElementById('loginModal').classList.add('active');
+    const modal = document.getElementById('loginModal');
+    if (modal) modal.classList.add('active');
 }
 
 function showRegisterModal() {
-    document.getElementById('registerModal').classList.add('active');
+    const modal = document.getElementById('registerModal');
+    if (modal) modal.classList.add('active');
 }
 
 function closeModal() {
@@ -707,6 +718,112 @@ function logout() {
     showNotification('Logged out successfully', 'info');
 }
 
+async function handlePageLogin(e) {
+    e.preventDefault();
+    const username = (document.getElementById('pageLoginUser')?.value || '').trim();
+    const password = document.getElementById('pageLoginPass')?.value || '';
+
+    if (!username || username.length < 3) {
+        showModalAlert('pageLoginAlert', 'Please enter a valid username or email address.', 'error');
+        return;
+    }
+    if (!password || password.length < 6) {
+        showModalAlert('pageLoginAlert', 'Password must be at least 6 characters.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('pageLoginBtn');
+    if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
+    hideModalAlert('pageLoginAlert');
+
+    try {
+        const api = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+        const response = await fetch(`${api}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            authToken = data.access_token;
+            const userResp = await fetch(`${api}/users/me`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+
+            if (userResp.ok) {
+                currentUser = await userResp.json();
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('authToken', authToken);
+                updateUIForAuthenticatedUser();
+                document.getElementById('pageLoginForm')?.reset();
+                showNotification('Welcome back, ' + (currentUser.username || 'User') + '!', 'success');
+                showPage('dashboard');
+            } else {
+                showModalAlert('pageLoginAlert', 'Failed to retrieve profile.', 'error');
+            }
+        } else {
+            const err = await response.json().catch(() => ({}));
+            showModalAlert('pageLoginAlert', err.detail || 'Invalid username or password.', 'error');
+        }
+    } catch (err) {
+        console.error('Page login error:', err);
+        showModalAlert('pageLoginAlert', 'Connection error. Ensure backend is running.', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
+    }
+}
+
+async function handlePageRegister(e) {
+    e.preventDefault();
+    const username = (document.getElementById('pageRegUser')?.value || '').trim();
+    const email = (document.getElementById('pageRegEmail')?.value || '').trim();
+    const full_name = (document.getElementById('pageRegFullName')?.value || '').trim();
+    const password = document.getElementById('pageRegPass')?.value || '';
+
+    if (!username || username.length < 3) {
+        showModalAlert('pageRegisterAlert', 'Username must be at least 3 characters.', 'error');
+        return;
+    }
+    if (!email || !email.includes('@')) {
+        showModalAlert('pageRegisterAlert', 'Please enter a valid email.', 'error');
+        return;
+    }
+    if (!password || password.length < 6) {
+        showModalAlert('pageRegisterAlert', 'Password must be at least 6 characters.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('pageRegSubmitBtn');
+    if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
+    hideModalAlert('pageRegisterAlert');
+
+    try {
+        const api = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+        const response = await fetch(`${api}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, full_name, password })
+        });
+
+        if (response.ok) {
+            document.getElementById('pageRegisterForm')?.reset();
+            showNotification('✅ Account created! Please sign in.', 'success');
+            showPage('login');
+            const loginUser = document.getElementById('pageLoginUser');
+            if (loginUser) loginUser.value = username;
+        } else {
+            const err = await response.json().catch(() => ({}));
+            showModalAlert('pageRegisterAlert', err.detail || 'Registration failed.', 'error');
+        }
+    } catch (err) {
+        console.error('Page register error:', err);
+        showModalAlert('pageRegisterAlert', 'Connection error. Ensure backend is running.', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
+    }
+}
+
 function clearAllUserData() {
     // Reset in-memory session cache
     allSessionsData = [];
@@ -793,34 +910,34 @@ async function tryRefreshAuth() {
 }
 
 function updateUIForAuthenticatedUser() {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerNavBtn = document.getElementById('registerNavBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const topAuth = document.getElementById('topAuthButtons');
+    const userMenu = document.getElementById('userMenu');
+    const heroSignInBtn = document.getElementById('heroSignInBtn');
     const topName = document.getElementById('topbarUserName');
     const sidebarName = document.querySelector('.sidebar-user-name');
     const sidebarRole = document.querySelector('.sidebar-user-role');
 
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (registerNavBtn) registerNavBtn.style.display = 'none';
-    if (logoutBtn) logoutBtn.style.display = 'flex';
+    if (topAuth) topAuth.style.display = 'none';
+    if (userMenu) userMenu.style.display = 'flex';
+    if (heroSignInBtn) heroSignInBtn.style.display = 'none';
 
-    const displayName = currentUser.username || currentUser.full_name || 'User';
+    const displayName = (currentUser && (currentUser.username || currentUser.full_name)) || 'User';
     if (topName) topName.textContent = displayName;
     if (sidebarName) sidebarName.textContent = displayName;
     if (sidebarRole) sidebarRole.textContent = 'Patient';
 }
 
 function updateUIForLoggedOutUser() {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerNavBtn = document.getElementById('registerNavBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const topAuth = document.getElementById('topAuthButtons');
+    const userMenu = document.getElementById('userMenu');
+    const heroSignInBtn = document.getElementById('heroSignInBtn');
     const topName = document.getElementById('topbarUserName');
     const sidebarName = document.querySelector('.sidebar-user-name');
     const sidebarRole = document.querySelector('.sidebar-user-role');
 
-    if (loginBtn) loginBtn.style.display = 'flex';
-    if (registerNavBtn) registerNavBtn.style.display = 'flex';
-    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (topAuth) topAuth.style.display = 'flex';
+    if (userMenu) userMenu.style.display = 'none';
+    if (heroSignInBtn) heroSignInBtn.style.display = 'inline-flex';
 
     if (topName) topName.textContent = 'Guest';
     if (sidebarName) sidebarName.textContent = 'Guest';
@@ -833,9 +950,10 @@ let allExercisesData = []; // Store all exercises for filtering
 async function loadAllExercises() {
     try {
         console.log('Loading all exercises...');
-        currentCategory = null; // Clear category when viewing all exercises
-        previousPage = 'allExercises'; // Track that we're in all exercises view
-        const url = `${API_BASE}/exercises`;
+        currentCategory = null;
+        previousPage = 'allExercises';
+        const api = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+        const url = `${api}/exercises`;
         console.log(`Fetching: ${url}`);
         const response = await fetch(url);
         console.log(`Response status: ${response.status}`);
@@ -852,16 +970,33 @@ async function loadAllExercises() {
             showNotification(`Failed to load exercises: ${response.status}`, 'error');
             const exerciseList = document.getElementById('allExercisesList');
             if (exerciseList) {
-                exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i><p>Unable to load exercises.</p><button class="btn btn-primary btn-sm" onclick="loadAllExercises()" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+                exerciseList.innerHTML = `
+                    <div class="empty-state-card" style="text-align:center;padding:40px;">
+                        <i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i>
+                        <p>Unable to load exercises from backend (HTTP ${response.status}).</p>
+                        <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+                            <button class="btn btn-primary btn-sm" onclick="loadAllExercises()"><i class="fas fa-redo"></i> Retry</button>
+                            <button class="btn btn-outline btn-sm" onclick="openServerModal()"><i class="fas fa-server"></i> Server Settings</button>
+                        </div>
+                    </div>`;
             }
             showPage('allExercises');
         }
     } catch (error) {
         console.error('Error loading all exercises:', error);
-        showNotification('Failed to load exercises. Retrying...', 'error');
+        showNotification('Failed to connect to backend server.', 'error');
         const exerciseList = document.getElementById('allExercisesList');
         if (exerciseList) {
-            exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i><p>Unable to load exercises. Server might be waking up.</p><button class="btn btn-primary btn-sm" onclick="loadAllExercises()" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+            exerciseList.innerHTML = `
+                <div class="empty-state-card" style="text-align:center;padding:40px;">
+                    <i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i>
+                    <p>Unable to connect to the backend server.</p>
+                    <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Ensure <code>python start_server.py</code> is running on <code>http://localhost:8000</code> or check your Render Cloud URL.</p>
+                    <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+                        <button class="btn btn-primary btn-sm" onclick="loadAllExercises()"><i class="fas fa-redo"></i> Retry</button>
+                        <button class="btn btn-outline btn-sm" onclick="openServerModal()"><i class="fas fa-server"></i> Server Connection Settings</button>
+                    </div>
+                </div>`;
         }
         showPage('allExercises');
     }
@@ -946,9 +1081,10 @@ function filterExercises(button, category) {
 async function loadCategoryExercises(category) {
     try {
         console.log(`Loading exercises for category: ${category}`);
-        currentCategory = category; // Store current category
-        previousPage = 'exerciseList'; // Track that we're in category list view
-        const response = await fetch(`${API_BASE}/exercises/category/${category}`);
+        currentCategory = category;
+        previousPage = 'exerciseList';
+        const api = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+        const response = await fetch(`${api}/exercises/category/${category}`);
         console.log(`Response status: ${response.status}`);
 
         if (response.ok) {
@@ -962,16 +1098,33 @@ async function loadCategoryExercises(category) {
             showNotification(`Failed to load exercises: ${response.status}`, 'error');
             const exerciseList = document.getElementById('exerciseList');
             if (exerciseList) {
-                exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i><p>Unable to load ${category} exercises.</p><button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+                exerciseList.innerHTML = `
+                    <div class="empty-state-card" style="text-align:center;padding:40px;">
+                        <i class="fas fa-exclamation-circle fa-2x" style="color:var(--orange);margin-bottom:12px;"></i>
+                        <p>Unable to load ${category} exercises.</p>
+                        <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+                            <button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')"><i class="fas fa-redo"></i> Retry</button>
+                            <button class="btn btn-outline btn-sm" onclick="openServerModal()"><i class="fas fa-server"></i> Server Settings</button>
+                        </div>
+                    </div>`;
             }
             showPage('exerciseList');
         }
     } catch (error) {
         console.error('Error loading exercises:', error);
-        showNotification('Failed to load exercises. Check connection.', 'error');
+        showNotification('Failed to connect to backend server.', 'error');
         const exerciseList = document.getElementById('exerciseList');
         if (exerciseList) {
-            exerciseList.innerHTML = `<div class="empty-state-card" style="text-align:center;padding:40px;"><i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i><p>Unable to load ${category} exercises. Server might be waking up.</p><button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')" style="margin-top:12px;"><i class="fas fa-redo"></i> Retry</button></div>`;
+            exerciseList.innerHTML = `
+                <div class="empty-state-card" style="text-align:center;padding:40px;">
+                    <i class="fas fa-wifi fa-2x" style="color:var(--red);margin-bottom:12px;"></i>
+                    <p>Unable to load ${category} exercises.</p>
+                    <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Ensure backend server is running on <code>http://localhost:8000</code> or check your Render Cloud URL.</p>
+                    <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+                        <button class="btn btn-primary btn-sm" onclick="loadCategoryExercises('${category}')"><i class="fas fa-redo"></i> Retry</button>
+                        <button class="btn btn-outline btn-sm" onclick="openServerModal()"><i class="fas fa-server"></i> Server Settings</button>
+                    </div>
+                </div>`;
         }
         showPage('exerciseList');
     }
@@ -5437,6 +5590,207 @@ document.head.appendChild(style);
     }
 })();
 
+// ============================================================================
+// BACKEND CONNECTION MANAGER & LIVE STATUS
+// ============================================================================
+
+async function checkServerHealthLive() {
+    const dot = document.getElementById('serverStatusDot');
+    const text = document.getElementById('serverStatusText');
+    const pill = document.getElementById('serverStatusPill');
+
+    if (!dot || !text) return;
+
+    // Set checking state
+    dot.className = 'status-dot dot-checking';
+    text.textContent = 'Connecting...';
+
+    const currentUrl = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+    const isLocal = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
+
+    try {
+        const result = await window.testBackendConnection(currentUrl);
+
+        if (result.ok) {
+            dot.className = 'status-dot dot-online';
+            const envLabel = isLocal ? 'Localhost' : 'Render Cloud';
+            text.textContent = `${envLabel} (${result.latency}ms)`;
+            if (pill) pill.title = `Connected to: ${currentUrl}\nLatency: ${result.latency}ms\nStatus: Online`;
+        } else {
+            dot.className = 'status-dot dot-offline';
+            if (result.isTimeout) {
+                text.textContent = 'Server Waking Up...';
+                if (pill) pill.title = `Backend at ${currentUrl} is starting up (cold start). Click to retry or switch.`;
+            } else {
+                text.textContent = 'Backend Offline';
+                if (pill) pill.title = `Cannot connect to: ${currentUrl}\nClick to configure or test connection.`;
+            }
+        }
+    } catch (e) {
+        dot.className = 'status-dot dot-offline';
+        text.textContent = 'Disconnected';
+        if (pill) pill.title = `Connection error: ${e.message}`;
+    }
+}
+
+function openServerModal() {
+    const modal = document.getElementById('serverModal');
+    const input = document.getElementById('modalApiUrl');
+    const resultBox = document.getElementById('modalServerTestResult');
+    if (!modal) return;
+
+    const current = window.getAPIBaseURL ? window.getAPIBaseURL() : API_BASE;
+    if (input) input.value = current;
+    if (resultBox) {
+        resultBox.style.display = 'none';
+        resultBox.className = 'server-test-result';
+    }
+
+    updateModalPresetButtons(current);
+    modal.classList.add('active');
+}
+
+function closeServerModal() {
+    const modal = document.getElementById('serverModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function updateModalPresetButtons(activeUrl) {
+    const localBtn = document.getElementById('modalPresetLocal');
+    const renderBtn = document.getElementById('modalPresetRender');
+    const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+
+    if (localBtn) localBtn.classList.toggle('active', activeUrl === localUrl);
+    if (renderBtn) renderBtn.classList.toggle('active', activeUrl === renderUrl);
+}
+
+function selectModalServerPreset(type) {
+    const input = document.getElementById('modalApiUrl');
+    const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+    const chosen = (type === 'local') ? localUrl : renderUrl;
+
+    if (input) input.value = chosen;
+    updateModalPresetButtons(chosen);
+}
+
+async function testModalApiConnection() {
+    const input = document.getElementById('modalApiUrl');
+    const btn = document.getElementById('modalTestBtn');
+    const resultBox = document.getElementById('modalServerTestResult');
+    const targetUrl = (input ? input.value : '') || window.getAPIBaseURL();
+
+    if (!resultBox) return;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    }
+
+    resultBox.style.display = 'block';
+    resultBox.className = 'server-test-result warning';
+    resultBox.innerHTML = '<i class="fas fa-satellite-dish fa-spin"></i> Pinging backend server...';
+
+    const res = await window.testBackendConnection(targetUrl);
+
+    if (res.ok) {
+        resultBox.className = 'server-test-result success';
+        resultBox.innerHTML = `<strong><i class="fas fa-check-circle"></i> Connected Successfully!</strong><br>
+        Response Time: <b>${res.latency} ms</b> | Database: <b>${(res.data && res.data.database) || 'connected'}</b><br>
+        URL: <code>${res.url}</code>`;
+    } else {
+        resultBox.className = 'server-test-result error';
+        resultBox.innerHTML = `<strong><i class="fas fa-exclamation-triangle"></i> Connection Failed</strong><br>
+        ${res.error || 'Server unreachable.'}<br>
+        <small>If using Render free tier, server may take ~40s to wake up on first request.</small>`;
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-bolt"></i> Test Connection';
+    }
+}
+
+function applyModalApiSettings() {
+    const input = document.getElementById('modalApiUrl');
+    const newUrl = input ? input.value.trim() : '';
+
+    if (newUrl && window.setAPIBaseURL) {
+        window.setAPIBaseURL(newUrl);
+        showNotification('✅ Backend API Base URL updated and saved!', 'success');
+    }
+
+    closeServerModal();
+    checkServerHealthLive();
+
+    // Reload active page data
+    if (currentPage === 'exercises') {
+        loadAllExercises();
+    } else if (currentPage === 'dashboard') {
+        loadDashboardData();
+    }
+}
+
+// Settings Page Backend Controls
+function selectServerPreset(type) {
+    const input = document.getElementById('stgApiUrl');
+    const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+    const chosen = (type === 'local') ? localUrl : renderUrl;
+
+    if (input) input.value = chosen;
+
+    const localBtn = document.getElementById('stgPresetLocal');
+    const renderBtn = document.getElementById('stgPresetRender');
+    if (localBtn) localBtn.classList.toggle('active', chosen === localUrl);
+    if (renderBtn) renderBtn.classList.toggle('active', chosen === renderUrl);
+}
+
+async function testSettingsApiConnection() {
+    const input = document.getElementById('stgApiUrl');
+    const btn = document.getElementById('stgTestConnBtn');
+    const resultBox = document.getElementById('stgServerTestResult');
+    const targetUrl = (input ? input.value : '') || window.getAPIBaseURL();
+
+    if (!resultBox) return;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    resultBox.style.display = 'block';
+    resultBox.className = 'server-test-result warning';
+    resultBox.innerHTML = '<i class="fas fa-satellite-dish fa-spin"></i> Pinging backend...';
+
+    const res = await window.testBackendConnection(targetUrl);
+
+    if (res.ok) {
+        resultBox.className = 'server-test-result success';
+        resultBox.innerHTML = `<strong><i class="fas fa-check-circle"></i> Connected!</strong> Response Time: <b>${res.latency} ms</b> | Database: <b>${(res.data && res.data.database) || 'connected'}</b>`;
+    } else {
+        resultBox.className = 'server-test-result error';
+        resultBox.innerHTML = `<strong><i class="fas fa-times-circle"></i> Failed:</strong> ${res.error || 'Server unreachable'}`;
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-bolt"></i> Test';
+    }
+}
+
+function applyAndSaveApiSettings() {
+    const input = document.getElementById('stgApiUrl');
+    const newUrl = input ? input.value.trim() : '';
+
+    if (newUrl && window.setAPIBaseURL) {
+        window.setAPIBaseURL(newUrl);
+        showNotification('✅ Backend API settings saved successfully!', 'success');
+        checkServerHealthLive();
+    }
+}
+
 // Expose core navigation, exercise, and authentication functions to window
 window.showPage = showPage;
 window.startExercise = startExercise;
@@ -5451,4 +5805,16 @@ window.handleRegister = handleRegister;
 window.handleForgotPassword = handleForgotPassword;
 window.logout = logout;
 window.exitExercise = exitExercise;
+window.openServerModal = openServerModal;
+window.closeServerModal = closeServerModal;
+window.selectModalServerPreset = selectModalServerPreset;
+window.testModalApiConnection = testModalApiConnection;
+window.applyModalApiSettings = applyModalApiSettings;
+window.selectServerPreset = selectServerPreset;
+window.testSettingsApiConnection = testSettingsApiConnection;
+window.applyAndSaveApiSettings = applyAndSaveApiSettings;
+window.checkServerHealthLive = checkServerHealthLive;
+window.handlePageLogin = handlePageLogin;
+window.handlePageRegister = handlePageRegister;
+
 

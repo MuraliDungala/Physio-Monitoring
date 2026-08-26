@@ -5,7 +5,9 @@ from datetime import datetime
 import os
 
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./physio_monitoring.db")
+from pathlib import Path
+DEFAULT_DB_PATH = Path(__file__).resolve().parent / "physio_monitoring.db"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH.as_posix()}")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 

@@ -5,10 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhysioMonitor - AI-Powered Physiotherapy</title>
     <script>
-        window.API_BASE_URL = window.API_BASE_URL || localStorage.getItem('API_BASE_URL') || 'https://physio-monitoring-backend.onrender.com';
+      // Force clear stale remote API URL before any JS loads
+      (function() {
+        var saved = localStorage.getItem('API_BASE_URL');
+        if (saved && saved.indexOf('localhost') === -1 && saved.indexOf('127.0.0.1') === -1) {
+          localStorage.removeItem('API_BASE_URL');
+          console.log('[init] Cleared stale remote API_BASE_URL:', saved);
+        }
+        // Guarantee window.API_BASE_URL for localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          window.API_BASE_URL = 'http://localhost:8000';
+          window.API_BASE = 'http://localhost:8000';
+        }
+      })();
     </script>
-    <script src="config.js?v=2"></script>
-    <link rel="stylesheet" href="style.css?v=3">
+    <script src="config.js?v=10"></script>
+    <link rel="stylesheet" href="style.css?v=10">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
@@ -45,11 +57,12 @@
                 <div class="nav-section">
                     <span class="nav-section-label">SUPPORT</span>
                     <a href="#" class="nav-item" data-page="chatbot" onclick="event.preventDefault(); showPage('chatbot')" data-i18n="aiAssistant"><i class="fas fa-robot"></i><span data-i18n="aiAssistant">AI Assistant</span></a>
+                    <a href="#" class="nav-item" data-page="login" id="sidebarAuthNav" onclick="event.preventDefault(); showPage('login')"><i class="fas fa-sign-in-alt"></i><span>Sign In</span></a>
                     <a href="#" class="nav-item" data-page="settings" onclick="event.preventDefault(); showPage('settings')" data-i18n="settings"><i class="fas fa-cog"></i><span data-i18n="settings">Settings</span></a>
                 </div>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-user" id="sidebarUser">
+                <div class="sidebar-user" id="sidebarUser" onclick="if (!currentUser) showPage('login')" style="cursor:pointer;" title="Click to Sign In">
                     <div class="sidebar-user-avatar"><i class="fas fa-user"></i></div>
                     <div class="sidebar-user-info">
                         <span class="sidebar-user-name">Guest</span>
@@ -71,6 +84,10 @@
                     </div>
                 </div>
                 <div class="topbar-right">
+                    <button class="server-status-pill" id="serverStatusPill" onclick="openServerModal()" title="Click to test or configure Backend Server Connection">
+                        <span class="status-dot dot-checking" id="serverStatusDot"></span>
+                        <span class="status-text" id="serverStatusText">Checking Backend...</span>
+                    </button>
                     <div class="lang-selector-wrap" style="margin-right: 8px;">
                         <select id="langSelect" class="select-modern select-sm" onchange="if(window.i18n) window.i18n.setLanguage(this.value)" style="padding: 4px 8px; font-size: 13px; border-radius: 6px; cursor: pointer;" title="Select Language">
                             <option value="en">🇬🇧 English</option>
@@ -99,14 +116,18 @@
                         </div>
                     </div>
                     <div class="topbar-divider"></div>
-                    <div class="user-menu" id="userMenu">
+                    <div class="auth-buttons-top" id="topAuthButtons" style="display:flex; gap:6px;">
+                        <button class="btn btn-primary btn-sm" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+                        <button class="btn btn-outline btn-sm" onclick="showRegisterModal()"><i class="fas fa-user-plus"></i> Register</button>
+                    </div>
+                    <div class="user-menu" id="userMenu" style="display:none;">
                         <div class="user-avatar-circle"><i class="fas fa-user"></i></div>
-                        <span class="topbar-username" id="topbarUserName">Guest</span>
+                        <span class="topbar-username" id="topbarUserName">User</span>
                         <i class="fas fa-chevron-down fa-xs"></i>
                         <div class="user-dropdown" id="userDropdown">
-                            <a href="#" id="loginBtn" data-i18n="login"><i class="fas fa-sign-in-alt"></i> Login</a>
-                            <a href="#" id="registerNavBtn" data-i18n="register"><i class="fas fa-user-plus"></i> Register</a>
-                            <a href="#" id="logoutBtn" data-i18n="logout" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="#" onclick="event.preventDefault(); showPage('dashboard');"><i class="fas fa-th-large"></i> Dashboard</a>
+                            <a href="#" onclick="event.preventDefault(); showPage('settings');"><i class="fas fa-cog"></i> Settings</a>
+                            <a href="#" id="logoutBtn" onclick="event.preventDefault(); logout();"><i class="fas fa-sign-out-alt"></i> Logout</a>
                         </div>
                     </div>
                 </div>
@@ -142,6 +163,7 @@
                                 <p class="hero-desc">Real-time posture correction, adaptive rehabilitation programs, and AI-driven insights for your recovery journey.</p>
                                 <div class="hero-btns">
                                     <button class="btn btn-primary btn-lg" onclick="showPage('exercises')"><i class="fas fa-play-circle"></i> Start Therapy</button>
+                                    <button class="btn btn-outline btn-lg" onclick="showLoginModal()" id="heroSignInBtn"><i class="fas fa-sign-in-alt"></i> Sign In / Register</button>
                                 </div>
                                 <div class="hero-stats-row">
                                     <div class="hero-stat"><strong>28+</strong><span>Exercises</span></div>
@@ -500,6 +522,7 @@
                             <button class="stg-tab" data-stg-tab="tracking"><i class="fas fa-video"></i><span>Tracking</span></button>
                             <button class="stg-tab" data-stg-tab="notifications"><i class="fas fa-bell"></i><span>Notifications</span></button>
                             <button class="stg-tab" data-stg-tab="appearance"><i class="fas fa-palette"></i><span>Appearance</span></button>
+                            <button class="stg-tab" data-stg-tab="server"><i class="fas fa-server"></i><span>Backend &amp; API</span></button>
                             <button class="stg-tab" data-stg-tab="privacy"><i class="fas fa-shield-alt"></i><span>Privacy</span></button>
                         </nav>
 
@@ -819,6 +842,56 @@
                                 </div>
                             </div>
 
+                            <!-- ─── BACKEND & API ─── -->
+                            <div class="stg-panel" id="stgPanel-server">
+                                <div class="stg-panel-header">
+                                    <div class="stg-panel-icon stg-icon-blue"><i class="fas fa-server"></i></div>
+                                    <div>
+                                        <h2>Backend &amp; Cloud Connection</h2>
+                                        <p>Configure API server endpoints and cloud connectivity</p>
+                                    </div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3>Active Server Environment</h3>
+                                    <p class="stg-card-desc">Select which backend API server this frontend connects to:</p>
+                                    <div class="server-preset-grid">
+                                        <button type="button" class="server-preset-btn" onclick="selectServerPreset('local')" id="stgPresetLocal">
+                                            <span><i class="fas fa-laptop-code"></i> Localhost</span>
+                                            <small>http://localhost:8000</small>
+                                        </button>
+                                        <button type="button" class="server-preset-btn" onclick="selectServerPreset('render')" id="stgPresetRender">
+                                            <span><i class="fas fa-cloud"></i> Render Cloud</span>
+                                            <small>physio-monitoring-backend.onrender.com</small>
+                                        </button>
+                                    </div>
+
+                                    <div class="form-group" style="margin-top:14px;">
+                                        <label><i class="fas fa-link"></i> Custom API Base URL</label>
+                                        <div style="display:flex; gap:8px;">
+                                            <input type="url" class="input-modern" id="stgApiUrl" placeholder="http://localhost:8000 or https://your-backend.onrender.com" style="flex:1;">
+                                            <button type="button" class="btn btn-outline btn-sm" onclick="testSettingsApiConnection()" id="stgTestConnBtn">
+                                                <i class="fas fa-bolt"></i> Test
+                                            </button>
+                                        </div>
+                                        <p class="stg-hint">No trailing slash. Leave blank to auto-detect based on host domain.</p>
+                                    </div>
+
+                                    <div id="stgServerTestResult" class="server-test-result"></div>
+                                </div>
+
+                                <div class="stg-card">
+                                    <h3><i class="fas fa-info-circle" style="color:var(--primary);margin-right:6px;"></i> Cloud Deployment Guide (Vercel + Render)</h3>
+                                    <div style="font-size:13px; line-height:1.6; color:var(--text-secondary);">
+                                        <p><strong>1. Backend (Render):</strong> Ensure your web service on Render is active. The free tier will sleep after 15 minutes of inactivity and takes ~30-50s to wake up on the first request.</p>
+                                        <p style="margin-top:8px;"><strong>2. Frontend (Vercel):</strong> Hosted as static web files. To connect to your Render backend, ensure the Render URL is saved above or injected into your environment.</p>
+                                    </div>
+                                    <div style="margin-top:14px;">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="applyAndSaveApiSettings()"><i class="fas fa-save"></i> Save &amp; Reconnect</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- ─── PRIVACY ─── -->
                             <div class="stg-panel" id="stgPanel-privacy">
                                 <div class="stg-panel-header">
@@ -857,7 +930,138 @@
                     </div>
                 </div>
 
+                <!-- ===== DEDICATED LOGIN PAGE ===== -->
+                <div id="loginPage" class="page">
+                    <div style="max-width:480px; margin:40px auto; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-xl); padding:36px; box-shadow:var(--shadow-lg);">
+                        <div style="text-align:center; margin-bottom:24px;">
+                            <div style="width:56px; height:56px; border-radius:50%; background:var(--primary-bg); color:var(--primary); font-size:26px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <h2 style="font-size:24px; font-weight:800; margin-bottom:6px;">Welcome to PhysioMonitor</h2>
+                            <p style="font-size:13px; color:var(--text-secondary);">Sign in to access your exercise routines and track recovery</p>
+                        </div>
+
+                        <div id="pageLoginAlert" class="modal-alert" style="display:none;"></div>
+
+                        <form id="pageLoginForm" onsubmit="handlePageLogin(event)">
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-user"></i> Username or Email</label>
+                                <input type="text" name="username" id="pageLoginUser" class="input-modern" placeholder="Enter username or email" required autocomplete="username">
+                            </div>
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-lock"></i> Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="password" id="pageLoginPass" class="input-modern" placeholder="Enter your password" required autocomplete="current-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-size:13px;">
+                                <label><input type="checkbox" checked> Remember me</label>
+                                <a href="#" onclick="event.preventDefault(); showLoginModal();" style="color:var(--primary);">Forgot Password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full" id="pageLoginBtn">
+                                <i class="fas fa-sign-in-alt"></i> <span>Sign In</span>
+                            </button>
+                        </form>
+
+                        <div style="text-align:center; margin-top:20px; font-size:13px; color:var(--text-secondary);">
+                            Don't have an account? <a href="#" onclick="event.preventDefault(); showPage('register');" style="color:var(--primary); font-weight:600;">Create one free</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== DEDICATED REGISTER PAGE ===== -->
+                <div id="registerPage" class="page">
+                    <div style="max-width:520px; margin:30px auto; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-xl); padding:36px; box-shadow:var(--shadow-lg);">
+                        <div style="text-align:center; margin-bottom:24px;">
+                            <div style="width:56px; height:56px; border-radius:50%; background:var(--primary-bg); color:var(--primary); font-size:26px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h2 style="font-size:24px; font-weight:800; margin-bottom:6px;">Create an Account</h2>
+                            <p style="font-size:13px; color:var(--text-secondary);">Join PhysioMonitor for real-time posture tracking &amp; rehab</p>
+                        </div>
+
+                        <div id="pageRegisterAlert" class="modal-alert" style="display:none;"></div>
+
+                        <form id="pageRegisterForm" onsubmit="handlePageRegister(event)">
+                            <div class="form-group" style="margin-bottom:14px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-user"></i> Username</label>
+                                <input type="text" name="username" id="pageRegUser" class="input-modern" placeholder="Choose a username" required autocomplete="username">
+                            </div>
+                            <div class="form-group" style="margin-bottom:14px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-envelope"></i> Email Address</label>
+                                <input type="email" name="email" id="pageRegEmail" class="input-modern" placeholder="your@email.com" required autocomplete="email">
+                            </div>
+                            <div class="form-group" style="margin-bottom:14px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-id-card"></i> Full Name</label>
+                                <input type="text" name="full_name" id="pageRegFullName" class="input-modern" placeholder="Your full name" autocomplete="name">
+                            </div>
+                            <div class="form-group" style="margin-bottom:18px;">
+                                <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-lock"></i> Password</label>
+                                <div class="input-password-wrap">
+                                    <input type="password" name="password" id="pageRegPass" class="input-modern" placeholder="Min 6 characters" required autocomplete="new-password">
+                                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility(this)"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full" id="pageRegSubmitBtn">
+                                <i class="fas fa-user-plus"></i> <span>Create Account</span>
+                            </button>
+                        </form>
+
+                        <div style="text-align:center; margin-top:20px; font-size:13px; color:var(--text-secondary);">
+                            Already have an account? <a href="#" onclick="event.preventDefault(); showPage('login');" style="color:var(--primary); font-weight:600;">Sign In here</a>
+                        </div>
+                    </div>
+                </div>
+
             </main>
+        </div>
+
+        <!-- ==================== BACKEND SERVER CONNECTION MODAL ==================== -->
+        <div id="serverModal" class="modal-overlay" onclick="handleModalBackdrop(event, 'serverModal')">
+            <div class="server-modal-box">
+                <button class="modal-close" onclick="closeServerModal()">&times;</button>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                    <div style="width:42px; height:42px; border-radius:10px; background:var(--primary-bg); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:20px;">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size:18px; font-weight:700; margin:0;">Backend Connection</h2>
+                        <p style="font-size:12px; color:var(--text-secondary); margin:0;">Test or change API endpoint connection</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;">Select Server Preset:</label>
+                    <div class="server-preset-grid">
+                        <button type="button" class="server-preset-btn" onclick="selectModalServerPreset('local')" id="modalPresetLocal">
+                            <span><i class="fas fa-laptop-code"></i> Localhost</span>
+                            <small>http://localhost:8000</small>
+                        </button>
+                        <button type="button" class="server-preset-btn" onclick="selectModalServerPreset('render')" id="modalPresetRender">
+                            <span><i class="fas fa-cloud"></i> Render Cloud</span>
+                            <small>physio-monitoring-backend.onrender.com</small>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-secondary);"><i class="fas fa-link"></i> API Base URL</label>
+                    <input type="url" class="input-modern" id="modalApiUrl" placeholder="http://localhost:8000 or https://your-backend.onrender.com">
+                </div>
+
+                <div id="modalServerTestResult" class="server-test-result"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:10px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="testModalApiConnection()" id="modalTestBtn">
+                        <i class="fas fa-bolt"></i> Test Connection
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="closeServerModal()">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="applyModalApiSettings()"><i class="fas fa-check"></i> Save &amp; Reconnect</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== LOGIN MODAL ==================== -->
@@ -1078,20 +1282,20 @@
     <!-- ==================== DEBUGGING PANEL ==================== -->
     <div id="debugPanel" class="debug-panel" style="display:none;"></div>
 
-    <script src="script.js?v=14"></script>
+    <script src="script.js?v=20"></script>
     
     <!-- New Module Scripts (in dependency order) -->
-    <script src="i18n.js?v=2"></script>
-    <script src="loading-manager.js?v=1"></script>
-    <script src="voice-assistant-system.js?v=2"></script>
-    <script src="physio-chatbot.js?v=1"></script>
-    <script src="injury-predictor.js?v=1"></script>
-    <script src="therapist-dashboard.js?v=1"></script>
+    <script src="i18n.js?v=10"></script>
+    <script src="loading-manager.js?v=10"></script>
+    <script src="voice-assistant-system.js?v=10"></script>
+    <script src="physio-chatbot.js?v=10"></script>
+    <script src="injury-predictor.js?v=10"></script>
+    <script src="therapist-dashboard.js?v=10"></script>
     
     <!-- Integration Module (must run after all modules) -->
-    <script src="integration.js?v=1"></script>
+    <script src="integration.js?v=10"></script>
     
     <!-- UI Enhancement Scripts -->
-    <script src="ui-enhancements.js?v=6"></script>
+    <script src="ui-enhancements.js?v=10"></script>
 </body>
 </html>

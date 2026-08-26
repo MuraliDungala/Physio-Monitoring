@@ -1,0 +1,23 @@
+{
+  "name": "physio-monitoring-frontend",
+  "version": "1.0.0",
+  "description": "AI-Powered Physiotherapy Monitoring System Frontend",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y serve . -l 3000",
+    "start": "npx -y serve . -l 3000",
+    "serve": "npx -y serve . -l 3000",
+    "build": "echo 'Static assets ready for deployment'"
+  },
+  "keywords": [
+    "physiotherapy",
+    "pose-detection",
+    "mediapipe",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

@@ -404,15 +404,20 @@ function initUserDropdown() {
     const dropdown = document.getElementById('userDropdown');
     if (!menu || !dropdown) return;
 
-    // Toggle on click instead of pure hover (better for accessibility)
     menu.addEventListener('click', (e) => {
+        if (e.target.closest('#userDropdown a')) {
+            dropdown.style.display = 'none';
+            return;
+        }
         e.stopPropagation();
         const isOpen = dropdown.style.display === 'block';
         dropdown.style.display = isOpen ? 'none' : 'block';
     });
 
-    document.addEventListener('click', () => {
-        if (dropdown) dropdown.style.display = 'none';
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#userMenu')) {
+            if (dropdown) dropdown.style.display = 'none';
+        }
     });
 }
 

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "outputDirectory": "frontend",
+  "outputDirectory": "physio-web/frontend",
   "cleanUrls": true,
   "headers": [
     {
