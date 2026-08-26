@@ -7,7 +7,7 @@
     "dev:frontend": "npm --prefix physio-web/frontend run dev",
     "dev:backend": "python start_server.py",
     "start": "npm --prefix physio-web/frontend run start",
-    "build": "npm --prefix physio-web/frontend run build"
+    "build": "node build.js"
   },
   "keywords": [
     "physiotherapy",
