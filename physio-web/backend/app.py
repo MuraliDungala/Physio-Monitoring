@@ -6,7 +6,7 @@ if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -2073,72 +2073,30 @@ async def get_voice_debug(user_id: str, current_user: User = Depends(get_current
         logger.error(f"Error getting voice debug info: {e}")
         return {"success": False, "message": str(e)}
 
-# Serve frontend
+# Serve frontend files dynamically
+_frontend_path = Path(__file__).resolve().parent.parent / "frontend"
+if not _frontend_path.exists():
+    _frontend_path = Path(__file__).resolve().parent / "static"
+
 @app.get("/")
 async def root():
     """Serve frontend index page"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "index.html", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content)
-    except FileNotFoundError:
-        return {"message": "Frontend not found. Please ensure frontend/index.html exists"}
+    index_file = _frontend_path / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {"message": "Frontend index.html not found"}
 
-@app.get("/style.css")
-async def get_css():
-    """Serve CSS file"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "style.css", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="text/css")
-    except FileNotFoundError:
-        return {"error": "CSS file not found"}
-
-@app.get("/script.js")
-async def get_js():
-    """Serve JavaScript file"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "script.js", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="application/javascript")
-    except FileNotFoundError:
-        return {"error": "JavaScript file not found"}
-
-@app.get("/voice-assistant.js")
-async def get_voice_assistant_js():
-    """Serve voice assistant module"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "voice-assistant.js", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="application/javascript")
-    except FileNotFoundError:
-        return {"error": "Voice assistant JavaScript file not found"}
-
-@app.get("/ui-enhancements.js")
-async def get_ui_enhancements_js():
-    """Serve UI enhancements module"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "ui-enhancements.js", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="application/javascript")
-    except FileNotFoundError:
-        return {"error": "UI enhancements JavaScript file not found"}
-
-@app.get("/test-validator.js")
-async def get_test_validator():
-    """Serve test validator file"""
-    try:
-        frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-        with open(frontend_dir / "test-validator.js", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, media_type="application/javascript")
-    except FileNotFoundError:
-        return {"error": "Test validator file not found"}
+@app.get("/{filename:path}")
+async def serve_static_file(filename: str):
+    """Serve frontend static files (js, css, images, html)"""
+    file_path = _frontend_path / filename
+    if file_path.is_file():
+        return FileResponse(file_path)
+    # If not a specific file, fallback to index.html for SPA
+    index_file = _frontend_path / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    raise HTTPException(status_code=404, detail="File not found")
 
 if __name__ == "__main__":
     import uvicorn
