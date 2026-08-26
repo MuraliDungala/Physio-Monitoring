@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhysioMonitor - AI-Powered Physiotherapy</title>
     <script>
-      // Force clear stale remote API URL before any JS loads
       (function() {
-        var saved = localStorage.getItem('API_BASE_URL');
-        if (saved && saved.indexOf('localhost') === -1 && saved.indexOf('127.0.0.1') === -1) {
-          localStorage.removeItem('API_BASE_URL');
-          console.log('[init] Cleared stale remote API_BASE_URL:', saved);
-        }
-        // Guarantee window.API_BASE_URL for localhost
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) {
+          var saved = localStorage.getItem('API_BASE_URL');
+          if (saved && saved.indexOf('localhost') === -1 && saved.indexOf('127.0.0.1') === -1) {
+            localStorage.removeItem('API_BASE_URL');
+          }
           window.API_BASE_URL = 'http://localhost:8000';
           window.API_BASE = 'http://localhost:8000';
         }
