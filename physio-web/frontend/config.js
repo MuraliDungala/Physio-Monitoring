@@ -5,7 +5,7 @@
 
 (function () {
     const DEFAULT_LOCAL_URL = 'http://localhost:8000';
-    const DEFAULT_RENDER_URL = 'https://physio-monitoring-backend.onrender.com';
+    const DEFAULT_RENDER_URL = 'https://physio-monitoring-backend1.onrender.com';
 
     function cleanUrl(url) {
         if (!url) return '';

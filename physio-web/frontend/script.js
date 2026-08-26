@@ -80,7 +80,7 @@ function _resolveApiBase() {
     const saved = localStorage.getItem('API_BASE_URL');
     if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
     if (window.API_BASE_URL && window.API_BASE_URL.trim()) return window.API_BASE_URL.trim().replace(/\/+$/, '');
-    return 'https://physio-monitoring-backend.onrender.com';
+    return 'https://physio-monitoring-backend1.onrender.com';
 }
 
 // Simple getter function - call this every time before a fetch
@@ -5659,7 +5659,7 @@ function updateModalPresetButtons(activeUrl) {
     const localBtn = document.getElementById('modalPresetLocal');
     const renderBtn = document.getElementById('modalPresetRender');
     const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
-    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend1.onrender.com';
 
     if (localBtn) localBtn.classList.toggle('active', activeUrl === localUrl);
     if (renderBtn) renderBtn.classList.toggle('active', activeUrl === renderUrl);
@@ -5668,7 +5668,7 @@ function updateModalPresetButtons(activeUrl) {
 function selectModalServerPreset(type) {
     const input = document.getElementById('modalApiUrl');
     const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
-    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend1.onrender.com';
     const chosen = (type === 'local') ? localUrl : renderUrl;
 
     if (input) input.value = chosen;
@@ -5736,7 +5736,7 @@ function applyModalApiSettings() {
 function selectServerPreset(type) {
     const input = document.getElementById('stgApiUrl');
     const localUrl = window.DEFAULT_LOCAL_URL || 'http://localhost:8000';
-    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend.onrender.com';
+    const renderUrl = window.DEFAULT_RENDER_URL || 'https://physio-monitoring-backend1.onrender.com';
     const chosen = (type === 'local') ? localUrl : renderUrl;
 
     if (input) input.value = chosen;
