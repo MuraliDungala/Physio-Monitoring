@@ -15,6 +15,7 @@
     function resolveInitialApiBase() {
         const hostname = window.location.hostname || '';
         const protocol = window.location.protocol || '';
+        const origin = window.location.origin || '';
         const isLocalHost = (
             hostname === 'localhost' ||
             hostname === '127.0.0.1' ||
@@ -23,12 +24,25 @@
             hostname.endsWith('.local')
         );
 
-        const savedUrl = localStorage.getItem('API_BASE_URL');
+        // If running directly on Render, use same-origin API
+        if (hostname.includes('onrender.com')) {
+            localStorage.setItem('API_BASE_URL', origin);
+            return cleanUrl(origin);
+        }
+
+        let savedUrl = localStorage.getItem('API_BASE_URL');
+
+        // Migrate old stale render backend URL if present in localStorage
+        if (savedUrl && (savedUrl.includes('physio-monitoring-backend.onrender.com') || savedUrl === 'https://physio-monitoring-backend.onrender.com')) {
+            console.log('🔄 Migrating stale Render URL in localStorage to:', DEFAULT_RENDER_URL);
+            savedUrl = DEFAULT_RENDER_URL;
+            localStorage.setItem('API_BASE_URL', DEFAULT_RENDER_URL);
+        }
 
         // If running locally, prefer local backend unless user specifically set a custom local address
         if (isLocalHost) {
             if (savedUrl && !savedUrl.includes('localhost') && !savedUrl.includes('127.0.0.1')) {
-                console.warn('🧹 Resetting stale remote API_BASE_URL from localStorage for local development:', savedUrl);
+                console.warn('🧹 Resetting remote API_BASE_URL for local development:', savedUrl);
                 localStorage.removeItem('API_BASE_URL');
             } else if (savedUrl && (savedUrl.includes('localhost') || savedUrl.includes('127.0.0.1'))) {
                 return cleanUrl(savedUrl);
