@@ -375,6 +375,14 @@ function showPage(pageName) {
         return;
     }
 
+    // Auto-save active session if navigating away from exercise page while exercise is running
+    if (pageName !== 'exercise' && typeof currentExercise !== 'undefined' && currentExercise && typeof exerciseState !== 'undefined' && exerciseState && exerciseState.reps > 0) {
+        console.log('🔄 Auto-saving active exercise session before navigation...');
+        if (typeof exitExercise === 'function') {
+            exitExercise().catch(err => console.warn('⚠️ Auto-save on navigation error:', err));
+        }
+    }
+
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -3594,8 +3602,12 @@ async function saveExerciseSession(exerciseName, totalReps, qualityScore = 0, du
             // Show completion notification
             showNotification(`${exerciseName}: ${totalReps} reps saved!`, 'success');
             
-            // Mark that we have new session data to show on dashboard
+            // Mark that we have new session data and refresh dashboard & reports immediately
             window._pendingDashboardRefresh = true;
+            if (currentUser && authToken) {
+                loadDashboardData();
+                loadReportsData();
+            }
             
             return session;
         } else if (response.status === 401) {
@@ -3964,6 +3976,35 @@ function updateAIInsights(sessions) {
     }
 
     const insights = [];
+    const sortedSessions = [...sessions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latest = sortedSessions[0];
+
+    // 1. Immediate Observation on the Most Recent Session
+    if (latest) {
+        const qualityCls = (latest.quality_score || 0) >= 70 ? 'ai-positive' : (latest.quality_score || 0) >= 40 ? '' : 'ai-warning';
+        insights.push({
+            icon: 'fas fa-fire',
+            cls: qualityCls,
+            text: `Latest Observation: Completed ${latest.total_reps || 0} reps of ${latest.exercise_name || 'Exercise'} with ${(latest.quality_score || 0).toFixed(0)}% form accuracy.`
+        });
+
+        if (latest.posture_correctness && latest.posture_correctness > 0) {
+            const posCls = latest.posture_correctness >= 75 ? 'ai-positive' : 'ai-warning';
+            insights.push({
+                icon: 'fas fa-shield-alt',
+                cls: posCls,
+                text: `Posture Check: ${latest.posture_correctness.toFixed(0)}% posture alignment maintained during your last session.`
+            });
+        }
+
+        if (latest.average_joint_angle && latest.average_joint_angle > 0) {
+            insights.push({
+                icon: 'fas fa-ruler-combined',
+                cls: 'ai-positive',
+                text: `Range of Motion: Average joint angle recorded at ${latest.average_joint_angle.toFixed(1)}° for ${latest.exercise_name}.`
+            });
+        }
+    }
 
     // Analyze body part improvements
     const bodyPartSessions = {};
@@ -4497,7 +4538,22 @@ function buildAIReport(sessions, stats) {
     if (avgQuality < 80)       recs += `<li><i class="fas fa-arrow-right t-blue"></i> Target quality scores above 80% before increasing reps</li>`;
     if (avgQuality >= 80)      recs += `<li><i class="fas fa-arrow-right t-blue"></i> Quality is excellent — consider increasing reps or adding more challenging exercises</li>`;
 
+    // Recent session observation
+    const sorted = [...sessions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latest = sorted[0];
+    let latestObservationHtml = '';
+    if (latest) {
+        const sDate = new Date(latest.date).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        latestObservationHtml = `
+            <div class="air-section">
+                <h4>Recent Session Observation</h4>
+                <p><i class="fas fa-fire t-orange"></i> <strong>${latest.exercise_name || 'Exercise'}</strong> (${sDate}): Completed <strong>${latest.total_reps || 0} reps</strong> with <strong>${(latest.quality_score || 0).toFixed(0)}% form quality</strong>${latest.average_joint_angle > 0 ? `, avg ROM ${latest.average_joint_angle.toFixed(1)}°` : ''}${latest.posture_correctness > 0 ? `, posture alignment ${latest.posture_correctness.toFixed(0)}%` : ''}.</p>
+            </div>
+        `;
+    }
+
     body.innerHTML = `
+        ${latestObservationHtml}
         <div class="air-section"><h4>Executive Summary</h4><p>Based on your ${totalSessions} session${totalSessions !== 1 ? 's' : ''} over ${daysActive} day${daysActive !== 1 ? 's' : ''}, rehabilitation is ${progressText}. Best performing exercise is <strong>${bestExercise}</strong> with ${totalReps} total reps completed.</p></div>
         <div class="air-section"><h4>Key Findings</h4><ul class="air-list">${findings}</ul></div>
         <div class="air-section"><h4>Recommendations</h4><ul class="air-list">${recs}</ul></div>
